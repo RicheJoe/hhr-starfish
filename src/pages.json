@@ -1,0 +1,68 @@
+{
+  "pages": [
+    {
+      "path": "pages/login-auth/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "合伙人中心"
+      }
+    },
+    {
+      "path": "pages/ucenter/index",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/agreement/agreement-service",
+      "style": {
+        "navigationBarTitleText": "服务协议"
+      }
+    },
+    {
+      "path": "pages/agreement/agreement-policy",
+      "style": {
+        "navigationBarTitleText": "隐私政策"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#6e6d6b",
+    "selectedColor": "#ff3456",
+    "borderStyle": "white",
+    "backgroundColor": "#fff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/images/nav/icon-index-b.png",
+        "selectedIconPath": "static/images/nav/icon-index-r.png",
+        "text": "合伙人"
+      },
+      {
+        "pagePath": "pages/ucenter/index",
+        "iconPath": "static/images/nav/icon-center-b.png",
+        "selectedIconPath": "static/images/nav/icon-center-r.png",
+        "text": "个人中心"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+      "^nut-(.*)?-(.*)": "nutui-uniapp/components/$1$2/$1$2.vue",
+      "^nut-(.*)": "nutui-uniapp/components/$1/$1.vue"
+    }
+  }
+}
