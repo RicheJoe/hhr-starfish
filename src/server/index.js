@@ -9,11 +9,26 @@ const axios = Axios.create({
 
 //获取服务器时间
 function getTimestamp() {
-  return Axios.request({
-    baseURL: `${import.meta.env.VITE_QDS}`,
-    url: "/common/getTimestamp",
-    method: "post",
-    adapter: uniAdapter
+  // return Axios.request({
+  //   baseURL: `${import.meta.env.VITE_QDS}`,
+  //   url: "/common/getTimestamp",
+  //   method: "post",
+  //   adapter: uniAdapter
+  // });
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: `${import.meta.env.VITE_QDS}` + "/common/getTimestamp",
+      method: "post",
+      success: res => {
+        resolve(res.data.data);
+      },
+      fail: err => {
+        uni.showToast({
+          title: `系统异常`,
+          icon: "error"
+        });
+      }
+    });
   });
 }
 //公共参数
@@ -21,11 +36,12 @@ const requestParams = {
   appKey: "quandashi4940841937",
   signMethod: "md5"
 };
+
 //请求拦截注入公共参数
 axios.interceptors.request.use(
   async config => {
     config.data = { ...requestParams, ...config.data };
-    config.data.timestamp = (await getTimestamp()).data.data.timestamp;
+    config.data.timestamp = (await getTimestamp()).timestamp;
     config.data.sign =
       new Date().getTime() + "" + Math.floor(Math.random() * 10000 + 1);
     // config.headers["client"] = "v2";

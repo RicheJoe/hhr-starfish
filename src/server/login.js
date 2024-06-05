@@ -17,3 +17,39 @@ export function getCookies() {
   };
   return getData(params, "user/tuser/login", "post");
 }
+
+//账号密码登录
+export function loginByPassword(data) {
+  return getData(
+    data,
+    import.meta.env.VITE_HOST + "/uaa/auth/mini/saLoginByPwd",
+    "post"
+  );
+}
+
+//获取手机验证码
+export function getVerCode(data) {
+  return getData(
+    data,
+    import.meta.env.VITE_HOST + "/uaa/auth/user/sendCode",
+    "post"
+  );
+}
+
+//手机验证码登录
+export function loginByVerCode(data) {
+  return getData(
+    data,
+    import.meta.env.VITE_HOST + "/uaa/auth/mini/saLoginByVerCode",
+    "post"
+  );
+}
+
+//微信授权手机号登录
+export function loginByWechat(data) {
+  return getData(
+    data,
+    import.meta.env.VITE_HOST + "/uaa/auth/mini/saLoginByAuth",
+    "post"
+  );
+}

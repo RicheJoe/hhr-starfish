@@ -1,8 +1,9 @@
 import JSEncrypt from "jsencrypt";
+
 export const encryptPassword = function (password) {
   var encrypt = new JSEncrypt();
   encrypt.setPublicKey(
-    "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCz2R8NwOoFC1VrJmHL0rwnBrneaVIvd64HOxE3J4636iPvQDHwfJN5oHKLTf1XoSTK7p9ITVvPPaYozYvtbh/5oznVehFeEzsu0mclpiqcuEJRJ2rwXubHPebbv2//+Cfa+jXYTAy43rz7FWi+cYgVTKL9MjSQn9ngztDdJBryMQIDAQAB"
+    "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCdN4fI/a/KBfVG/mZG9s6tBnGRVd5P1QpLUcZJuJn1fPZPpezoiRmUgZD0wUVIWRgvOmjCf1rYX9VtWq2gAjCg3ElVrR4R4GhzHCqjsI+AVTwnvKA6r8WOcC0FMewaWm+shuhgoRAXv0znZ8bDqVV5J27CAldLU+T5XLpUTHuw+wIDAQAB"
   );
   var data = encrypt.encrypt(password);
   return data;

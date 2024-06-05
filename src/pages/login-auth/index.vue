@@ -54,7 +54,7 @@
       <view class="text">立即登录</view>
     </button>
 
-    <view class="wx-user-profile" @click="getUserProfile()">
+    <view class="wx-user-profile" @click="login2Wechat()">
       <image style="width: 50px; height: 50px" src="/static/images/icon/wx.png"></image>
     </view>
 
@@ -66,7 +66,15 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { onReady, onLoad } from "@dcloudio/uni-app";
-import { getCookies } from "@/server/login.js";
+import {
+  getCookies,
+  loginByPassword,
+  getVerCode,
+  loginByVerCode,
+  loginByWechat
+} from "@/server/login.js";
+import { encryptPassword } from "@/utils/index.js";
+
 const title = ref("Hello");
 const loginType = ref(1);
 const changeLoginType = type => {
@@ -77,25 +85,10 @@ const username = ref("");
 const password = ref("");
 const verificationCode = ref("");
 const getCodeText = ref("获取验证码");
-const getCode = () => {
-  if (getCodeText.value === "获取验证码") {
-    console.log("getCode...");
-    // 发送验证码
-    getCodeText.value = "发送中...";
-    let count = 60;
-    let interval = setInterval(() => {
-      if (count <= 0) {
-        getCodeText.value = "获取验证码";
-        clearInterval(interval);
-        return;
-      }
-      getCodeText.value = count + "秒后重新获取";
-      count--;
-    }, 1000);
-  }
-};
+
 const isChecked = ref(false);
 const windowHeight = ref(750);
+const toast = useToast(); //提示
 
 onReady(() => {});
 onLoad(() => {
@@ -108,42 +101,15 @@ onLoad(() => {
 });
 
 const getUserProfile = () => {
-  let that = this;
-  let code = "";
-  wx.login({
-    success: res => {
-      code = res.code;
-    }
-  });
-  // 获取用户信息
-  wx.getUserProfile({
-    lang: "zh_CN",
-    desc: "用户登录",
-    success: res => {
-      let loginParams = {
-        code: code,
-        app: 3,
-        encryptedData: res.encryptedData,
-        iv: res.iv,
-        rawData: res.rawData,
-        signature: res.signature
-      };
-      //TODO: 处理登录
-      console.log("loginParams", loginParams);
-      //存储个人信息
-      // uni.setStorageSync('userInfo', res.data.userInfo);
-      /**
-       * 取个人信息 	const value = uni.getStorageSync('userInfo');
-       */
-      // wx.switchTab({
-      //   url: "/pages/index/index"
-      // });
-    },
-    // 失败回调
-    fail: () => {
-      // 弹出错误
-      App.showError("已拒绝小程序获取信息");
-    }
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: res => {
+        resolve(res);
+      },
+      fail: err => {
+        reject(err);
+      }
+    });
   });
 };
 
@@ -163,23 +129,132 @@ const checkAgreement = type => {
       break;
   }
 };
-const toast = useToast();
 const loginIn = async () => {
-  //登录接口
-  uni.showLoading({
-    title: "加载中",
-    mask: true
-  });
-  let res = await getCookies();
-  console.log(res, "1");
-  uni.hideLoading();
   if (!username.value) return toast.text("请输入手机号码");
+  if (!isChecked.value) return toast.text("请同意用户协议");
   if (loginType.value == 1) {
     if (!password.value) return toast.text("请输入登录密码");
+    login2Password();
   } else {
     if (!verificationCode.value) return toast.text("请输入验证码");
+    login2VerCode();
   }
-  if (!isChecked.value) return toast.text("请先同意用户协议");
+};
+// 账号密码登录
+const login2Password = async () => {
+  //登录接口
+  uni.showLoading({
+    title: "正在登录",
+    mask: true
+  });
+  try {
+    let res = await loginByPassword({
+      loginAccount: username.value,
+      password: encryptPassword(password.value),
+      source: 17,
+      agreeSelected: 1
+    });
+    console.log(res, "账号密码登录信息");
+    if (res.tokenValue) {
+      //存储个人信息
+      uni.setStorageSync("userInfo", res);
+      //跳转
+      wx.switchTab({
+        url: "/pages/index/index"
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    uni.hideLoading();
+  }
+};
+//获取验证码
+const getCode = () => {
+  if (!username.value) return;
+  if (getCodeText.value === "获取验证码") {
+    console.log("getCode...");
+    // 发送验证码
+    getCodeText.value = "发送中...";
+    let count = 60;
+    let interval = setInterval(() => {
+      if (count <= 0) {
+        getCodeText.value = "获取验证码";
+        clearInterval(interval);
+        return;
+      }
+      getCodeText.value = count + "秒后重新获取";
+      count--;
+    }, 1000);
+    queryVerCode();
+  }
+};
+const queryVerCode = async () => {
+  //登录接口
+  let res = await getVerCode({
+    phone: username.value,
+    type: 1
+  });
+  console.log(res, "获取验证码信息");
+};
+//验证码登录
+const login2VerCode = async () => {
+  //登录接口
+  uni.showLoading({
+    title: "正在登录",
+    mask: true
+  });
+  try {
+    let res = await loginByVerCode({
+      phone: username.value,
+      code: verificationCode.value,
+      source: 17,
+      agreeSelected: 1,
+      autoFlag: 0
+    });
+    console.log(res, "验证码登录信息");
+    if (res.tokenValue) {
+      //     {
+      //     "tokenName": "qdsToken",
+      //     "tokenValue": "475efeaa-3382-4c94-a986-c9a00743135f",
+      //     "userId": "6c7057467444384f346944576968664b582b486436513d3d",
+      //     "userName": "杨增勋",
+      //     "userPhone": "15811079252"
+      // }
+      //存储个人信息
+      uni.setStorageSync("userInfo", res);
+      //跳转
+      wx.switchTab({
+        url: "/pages/index/index"
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    uni.hideLoading();
+  }
+};
+//微信授权登录
+const login2Wechat = async () => {
+  let wechatInfo = await getUserProfile();
+  console.log(wechatInfo, "wechatInfo");
+  let res = await loginByWechat({
+    agreeSelected: 1,
+    appId: "wxb88350bcb03296d5",
+    code: wechatInfo.code,
+    loginType: 2,
+    source: 17
+  });
+  console.log(res, "微信授权登录信息");
+  if (res.tokenValue) {
+    toast.success("登录成功");
+    //存储个人信息
+    uni.setStorageSync("userInfo", res);
+    //跳转
+    wx.switchTab({
+      url: "/pages/index/index"
+    });
+  }
 };
 </script>
 
@@ -260,7 +335,7 @@ const loginIn = async () => {
     cursor: pointer;
     color: #ff9900;
     position: absolute;
-    right: 0px;
+    right: 28px;
     top: 8px;
   }
 }
