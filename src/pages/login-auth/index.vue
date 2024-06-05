@@ -12,7 +12,6 @@
         v-model="username"
         :placeholderStyle="placeholderStyle"
         placeholder="请输入手机号码"
-        @input="input"
       ></uni-easyinput>
     </uni-forms-item>
 
@@ -56,11 +55,7 @@
     </button>
 
     <view class="wx-user-profile" @click="getUserProfile()">
-      <image
-        style="width: 50px; height: 50px"
-        src="/static/images/icon/wx.png"
-        @error="imageError"
-      ></image>
+      <image style="width: 50px; height: 50px" src="/static/images/icon/wx.png"></image>
     </view>
 
     <nut-toast></nut-toast>
@@ -71,6 +66,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { onReady, onLoad } from "@dcloudio/uni-app";
+import { getCookies } from "@/server/login.js";
 const title = ref("Hello");
 const loginType = ref(1);
 const changeLoginType = type => {
@@ -135,8 +131,10 @@ const getUserProfile = () => {
       //TODO: 处理登录
       console.log("loginParams", loginParams);
       //存储个人信息
-      // wx.setStorageSync("userInfo", res.data.userInfo);
-      // wx.setStorageSync("token", res.data.token);
+      // uni.setStorageSync('userInfo', res.data.userInfo);
+      /**
+       * 取个人信息 	const value = uni.getStorageSync('userInfo');
+       */
       // wx.switchTab({
       //   url: "/pages/index/index"
       // });
@@ -166,7 +164,15 @@ const checkAgreement = type => {
   }
 };
 const toast = useToast();
-const loginIn = () => {
+const loginIn = async () => {
+  //登录接口
+  uni.showLoading({
+    title: "加载中",
+    mask: true
+  });
+  let res = await getCookies();
+  console.log(res, "1");
+  uni.hideLoading();
   if (!username.value) return toast.text("请输入手机号码");
   if (loginType.value == 1) {
     if (!password.value) return toast.text("请输入登录密码");

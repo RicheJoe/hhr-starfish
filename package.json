@@ -37,7 +37,10 @@
     "build:mp-xhs": "uni build -p mp-xhs",
     "build:quickapp-webview": "uni build -p quickapp-webview",
     "build:quickapp-webview-huawei": "uni build -p quickapp-webview-huawei",
-    "build:quickapp-webview-union": "uni build -p quickapp-webview-union"
+    "build:quickapp-webview-union": "uni build -p quickapp-webview-union",
+    "dev": "npm run dev:h5",
+    "pre": "npm run dev:mp-weixin",
+    "pro": "npm run build:mp-weixin"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4000720240327002",
@@ -55,7 +58,9 @@
     "@dcloudio/uni-mp-xhs": "3.0.0-4000720240327002",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4000720240327002",
     "@dcloudio/uni-ui": "^1.5.5",
-    "axios": "^1.6.8",
+    "axios": "^1.6.0",
+    "axios-adapter-uniapp": "^0.1.4",
+    "jsencrypt": "^3.3.2",
     "nutui-uniapp": "^1.7.5",
     "thorui-uni": "^2.9.5",
     "vue": "^3.3.11",
