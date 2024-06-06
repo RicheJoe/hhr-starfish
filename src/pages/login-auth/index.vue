@@ -76,13 +76,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { onReady, onLoad } from "@dcloudio/uni-app";
-import {
-  getCookies,
-  loginByPassword,
-  getVerCode,
-  loginByVerCode,
-  loginByWechat
-} from "@/server/login.js";
+import { loginByPassword, getVerCode, loginByVerCode, loginByWechat } from "@/server/login.js";
 import { encryptPassword } from "@/utils/index.js";
 
 const title = ref("Hello");
@@ -104,24 +98,11 @@ onReady(() => {});
 onLoad(() => {
   const systemInfo = uni.getSystemInfoSync();
   windowHeight.value = systemInfo.windowHeight;
-  console.log("skill Launch", wx, systemInfo.windowHeight);
-  wx.onAppShow(options => {
-    console.log("skill AppShow");
-  });
+  // console.log("skill Launch", wx, systemInfo.windowHeight);
+  // wx.onAppShow(options => {
+  //   console.log("skill AppShow");
+  // });
 });
-
-const getUserProfile = () => {
-  return new Promise((resolve, reject) => {
-    wx.login({
-      success: res => {
-        resolve(res);
-      },
-      fail: err => {
-        reject(err);
-      }
-    });
-  });
-};
 
 const checkAgreement = type => {
   switch (type) {

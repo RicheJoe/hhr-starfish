@@ -53,3 +53,16 @@ export function loginByWechat(data) {
     "post"
   );
 }
+
+/**
+ * @description 用户ID登录  这个接口直接用户id登录 可以实现永久登录不退登
+ * @param {*} data source 17 userIde
+ * @returns
+ */
+export function loginByUserId(data) {
+  return getData(
+    data,
+    import.meta.env.VITE_HOST + "/uaa/auth/sap/loginById",
+    "post"
+  );
+}
