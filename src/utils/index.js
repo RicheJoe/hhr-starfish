@@ -8,3 +8,15 @@ export const encryptPassword = function (password) {
   var data = encrypt.encrypt(password);
   return data;
 };
+
+export const getUserInfo = function () {
+  let userInfo = uni.getStorageSync("userInfo");
+  // {
+  //   tokenName: "qdsToken";
+  //   tokenValue: "8275a805-c848-4ae8-b122-d334bd981e9a";
+  //   userId: "507a78793872326f56523073752f755956754e3351513d3d";
+  //   userName: "qds0517144";
+  //   userPhone: "18829068598";
+  // }
+  return userInfo;
+};

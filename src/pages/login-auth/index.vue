@@ -54,8 +54,18 @@
       <view class="text">立即登录</view>
     </button>
 
-    <view class="wx-user-profile" @click="login2Wechat()">
-      <image style="width: 50px; height: 50px" src="/static/images/icon/wx.png"></image>
+    <view class="wx-user-profile">
+      <button
+        open-type="getPhoneNumber"
+        @getphonenumber="getPhoneNumber"
+        type="default"
+        v-if="isChecked"
+      >
+        <image style="width: 50px; height: 50px" src="/static/images/icon/wx.png"></image>
+      </button>
+      <button type="default" v-else @click="checkFirst">
+        <image style="width: 50px; height: 50px" src="/static/images/icon/wx.png"></image>
+      </button>
     </view>
 
     <nut-toast></nut-toast>
@@ -235,13 +245,19 @@ const login2VerCode = async () => {
   }
 };
 //微信授权登录
-const login2Wechat = async () => {
-  let wechatInfo = await getUserProfile();
-  console.log(wechatInfo, "wechatInfo");
+const getPhoneNumber = async e => {
+  isChecked.value = true;
+  if (e.detail.code) {
+    login2Wechat(e.detail.code);
+  } else {
+    toast.error("微信授权失败");
+  }
+};
+const login2Wechat = async code => {
   let res = await loginByWechat({
     agreeSelected: 1,
     appId: "wxb88350bcb03296d5",
-    code: wechatInfo.code,
+    code: code,
     loginType: 2,
     source: 17
   });
@@ -255,6 +271,9 @@ const login2Wechat = async () => {
       url: "/pages/index/index"
     });
   }
+};
+const checkFirst = () => {
+  toast.text("请同意用户协议");
 };
 </script>
 
@@ -375,6 +394,7 @@ const login2Wechat = async () => {
     text-decoration: underline;
   }
 }
+
 .wx-user-profile {
   position: fixed;
   bottom: 10%;
@@ -383,6 +403,13 @@ const login2Wechat = async () => {
   img {
     width: 50px;
     height: 50px;
+  }
+  button:after {
+    border: none;
+  }
+  button[type="default"] {
+    background-color: #fff;
+    border-radius: 0;
   }
 }
 </style>

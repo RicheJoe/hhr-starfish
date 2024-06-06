@@ -1,6 +1,6 @@
 import Axios from "axios";
 import uniAdapter from "axios-adapter-uniapp";
-
+import { getUserInfo } from "@/utils/index.js";
 const axios = Axios.create({
   adapter: uniAdapter,
   baseURL: `${import.meta.env.VITE_QDS}`,
@@ -44,8 +44,7 @@ axios.interceptors.request.use(
     config.data.timestamp = (await getTimestamp()).timestamp;
     config.data.sign =
       new Date().getTime() + "" + Math.floor(Math.random() * 10000 + 1);
-    // config.headers["client"] = "v2";
-    // config.headers["qdsToken"] = Common.getUAA_TOKEN();
+    config.headers["qdsToken"] = getUserInfo().tokenValue;
     return config;
   },
   error => {
@@ -58,6 +57,8 @@ axios.interceptors.response.use(
     if (res.data.code == 9091 && res.data.subCode == 10002) {
       return res.data;
     } else if (res.data.subCode == 10004) {
+      //token过期 重新登录
+      uni.removeStorageSync("userInfo");
       wx.navigateTo({
         url: "/pages/login-auth/index"
       });
