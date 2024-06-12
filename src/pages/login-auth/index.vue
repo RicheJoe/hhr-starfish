@@ -102,6 +102,7 @@ onLoad(() => {
   // wx.onAppShow(options => {
   //   console.log("skill AppShow");
   // });
+  console.log("环境：", import.meta.env.MODE, import.meta.env.VITE_QDS);
 });
 
 const checkAgreement = type => {
