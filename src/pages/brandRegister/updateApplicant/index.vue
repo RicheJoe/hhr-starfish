@@ -139,11 +139,18 @@ view {
   .form-value {
     color: #333;
   }
-  .file-box{
-    .sub-title{
+  .file-box {
+    margin-top: 20rpx;
+    padding: 0 32rpx;
+    .sub-title {
       display: flex;
       align-items: center;
-      font-size: 24rpx;
+      font-size: 26rpx;
+      color: #666;
+      .show-template {
+        color: #ff7200;
+        text-decoration: underline;
+      }
     }
   }
 }
