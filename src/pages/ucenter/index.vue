@@ -1,28 +1,13 @@
 <template>
   <view class="content">
     <view class="text-area">
-      <text class="title">{{ ucenter }}</text>
+      <text class="title">{{ "ucenter" }}</text>
     </view>
-    <p>ucenterucenterucenterucenterucenter</p>
+    <p>个人中心</p>
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      title: "ucenter"
-    };
-  },
-  onLoad() {
-    console.log("ucenter Launch", wx);
-    wx.onAppShow(options => {
-      console.log("ucenter AppShow");
-    });
-  },
-
-  methods: {}
-};
+<script setup>
 </script>
 
 <style>

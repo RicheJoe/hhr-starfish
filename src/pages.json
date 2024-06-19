@@ -29,6 +29,18 @@
       "style": {
         "navigationBarTitleText": "隐私政策"
       }
+    },
+    {
+      "path": "pages/brandRegister/applicantList/index",
+      "style": {
+        "navigationBarTitleText": "编辑申请人"
+      }
+    },
+    {
+      "path": "pages/brandRegister/niceClassify/index",
+      "style": {
+        "navigationBarTitleText": "商品类别选择"
+      }
     }
   ],
   "tabBar": {

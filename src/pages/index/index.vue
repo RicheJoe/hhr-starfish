@@ -4,18 +4,24 @@
       <text class="title">{{ title }}</text>
       <img src="/static/images/icon/pay-success.png" alt="" />
     </view>
+
+    <nut-button type="default" @click="toPage('/pages/brandRegister/applicantList/index')"
+      >申请人编辑</nut-button
+    >
+
+    <nut-button type="success" @click="toPage('/pages/brandRegister/niceClassify/index')"
+      >尼斯分类选择</nut-button
+    >
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      title: "Hello HHR"
-    };
-  },
-  onLoad() {},
-  methods: {}
+<script setup>
+import { reactive, ref } from "vue";
+const title = ref("HHR INDex");
+const toPage = url => {
+  wx.navigateTo({
+    url
+  });
 };
 </script>
 
