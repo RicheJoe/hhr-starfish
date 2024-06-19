@@ -5,7 +5,7 @@
       <img src="/static/images/icon/pay-success.png" alt="" />
     </view>
 
-    <nut-button type="default" @click="toPage('/pages/brandRegister/applicantList/index')"
+    <nut-button type="primary" @click="toPage('/pages/brandRegister/applicantList/index')"
       >申请人编辑</nut-button
     >
 
