@@ -1,5 +1,5 @@
 <template>
-  <div class="nice-wrapper">
+  <view class="nice-wrapper">
     <nut-safe-area position="top" />
     <nut-steps :current="2">
       <nut-step> 1 </nut-step>
@@ -28,13 +28,19 @@
           class="nice-all-level-1-name"
           @click="changeCheckCgId(item.cgId)"
         >
-          {{ item.cgNum + " " + item.cgName }}
+          <nut-badge :value="l3CheckedNum(item)">
+            <view> {{ item.cgNum + " " + item.cgName }} </view>
+          </nut-badge>
         </div>
       </div>
 
       <div class="nice-level-child" v-if="niceClassifyChild && niceClassifyChild.list.length">
         <div v-for="item in niceClassifyChild.list" :key="item.cgId" class="nice-all-level-2-name">
-          <div class="l2-title" @click="changeCheckCgIdL2(item)" :class="{ active: item.isExpand }">
+          <div
+            class="l2-title"
+            @click="changeCheckCgIdL2(item)"
+            :class="{ active: item.cgList.find(i => i.isChecked), expand: item.isExpand }"
+          >
             <nut-icon name="triangle-up" custom-color="#e4e4e4"></nut-icon>
             <view style="flex: 1">{{ item.cgNum + " " + item.cgName }}</view>
           </div>
@@ -54,8 +60,28 @@
         </div>
       </div>
     </div>
+    <view class="footerWrap">
+      <view class="fileWrap">
+        <!-- <image src="/images/clickNum1.png" /> -->
+        <image src="@/static/images/brandRegister/clickNum0.png" />
+        <!-- <text wx:if="{{chooseList.length}}"></text> -->
+      </view>
+      <view class="clickNumWrap">
+        <view class="clickNum">
+          <view
+            >合计：<text>￥{{ 1 }}</text></view
+          >
+          <view
+            >已选<text>{{ 2 }}</text
+            >个类别，共<text>{{ 3 }}</text
+            >个小项</view
+          >
+        </view>
+        <view class="nextBtn {{1}}">保存</view>
+      </view>
+    </view>
     <nut-safe-area position="bottom" />
-  </div>
+  </view>
 </template>
 
 <script setup>
@@ -90,6 +116,14 @@ const niceClassifyChild = computed(() => {
     return niceClassify.value.find(i => i.cgId == checkedCgId.value) || [];
   }
 });
+//当前大类已经选中的三级数量
+const l3CheckedNum = computed(() => {
+  return item =>
+    item.list
+      .map(i => i.cgList)
+      .flat()
+      .filter(i => i.isChecked).length;
+});
 
 //关键字检索
 const inputSearch = _.debounce(async () => {
@@ -102,21 +136,30 @@ const inputSearch = _.debounce(async () => {
 }, 300);
 //点击左侧一级分类 查对应的二级
 const changeCheckCgId = async cgId => {
-  checkedCgId.value = cgId;
-  let checkedItem = niceClassify.value.find(i => i.cgId == checkedCgId.value);
-  if (checkedItem.list.length) return;
-  let res = await queryNiceListByFirst({
-    cgId: cgId,
-    containThree: 1 // 是否查询小项 0是不查询 1是查询
-  });
-  res.forEach(element => {
-    element.isExpand = false; //是否展开二级分类
-    element.cgList.forEach(ele => {
-      ele.isChecked = false; //三级是否被选中
+  try {
+    uni.showLoading({
+      mask: true
     });
-  });
-  checkedItem.list = res;
-  console.log("下级：", res);
+    checkedCgId.value = cgId;
+    let checkedItem = niceClassify.value.find(i => i.cgId == checkedCgId.value);
+    if (checkedItem.list.length) return;
+    let res = await queryNiceListByFirst({
+      cgId: cgId,
+      containThree: 1 // 是否查询小项 0是不查询 1是查询
+    });
+    res.forEach(element => {
+      element.isExpand = false; //是否展开二级分类
+      element.cgList.forEach(ele => {
+        ele.isChecked = false; //三级是否被选中
+      });
+    });
+    checkedItem.list = res;
+    console.log("下级：", res);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    uni.hideLoading();
+  }
 };
 //点击二级分类
 const changeCheckCgIdL2 = item => {
@@ -136,20 +179,27 @@ onReady(() => {
 
 <style scoped lang='scss'>
 .nice-wrapper {
-  height: 100vh;
+  height: calc(100vh - 24rpx);
   display: flex;
   flex-direction: column;
   padding-top: 24rpx;
+  overflow: hidden;
 }
 .nice-all {
   flex: 1;
   display: flex;
   margin-top: 24rpx;
-
+  overflow: hidden;
+  padding-bottom: 140rpx;
   .nice-all-level-1 {
+    overflow-y: auto;
     width: 32%;
     cursor: pointer;
     font-size: 34rpx;
+    :deep .nut-badge__content {
+      right: 0rpx;
+      top: 0rpx;
+    }
   }
   .nice-all-level-1-name {
     padding: 24rpx;
@@ -162,6 +212,7 @@ onReady(() => {
 
   // 右侧
   .nice-level-child {
+    overflow-y: auto;
     width: 68%;
     background-color: #f5f5f5;
     padding-top: 18rpx;
@@ -180,7 +231,12 @@ onReady(() => {
     }
   }
   .l2-title.active {
-    // color: #ff7200;
+    color: #ff7200;
+    :deep .nut-icon {
+      color: #ff7200 !important;
+    }
+  }
+  .l2-title.expand {
     :deep .nut-icon {
       transform: rotate(180deg);
     }
@@ -200,7 +256,7 @@ onReady(() => {
       padding-bottom: 24rpx;
       display: flex;
       justify-content: space-between;
-      height: 40rpx;
+      min-height: 50rpx;
       :deep .nut-icon {
         color: transparent;
       }
@@ -212,5 +268,75 @@ onReady(() => {
       }
     }
   }
+}
+.footerWrap {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 120rpx;
+  background: #fff;
+  border-top: 2rpx solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 3;
+
+  image {
+    display: block;
+    width: 116rpx;
+    height: 96rpx;
+    margin-left: 32rpx;
+  }
+}
+.fileWrap text {
+  position: absolute;
+  right: 4rpx;
+  top: 4rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #ff4422;
+}
+
+.clickNumWrap {
+  margin-right: 28rpx;
+  display: flex;
+  align-items: center;
+}
+
+.clickNum view:nth-child(1) {
+  text-align: right;
+  font-size: 28rpx;
+  line-height: 32rpx;
+}
+
+.clickNum view:nth-child(1) text {
+  color: #ff4422;
+}
+
+.clickNum view:nth-child(2) {
+  margin-top: 8rpx;
+  text-align: right;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  color: #666;
+}
+
+.clickNum view:nth-child(2) text {
+  font-size: 24rpx;
+  color: #222;
+}
+
+.nextBtn {
+  margin-left: 28rpx;
+  width: 200rpx;
+  height: 80rpx;
+  border-radius: 4rpx;
+  background: #ff9900;
+  font-size: 32rpx;
+  text-align: center;
+  line-height: 80rpx;
+  color: #fff;
 }
 </style>
