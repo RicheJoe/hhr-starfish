@@ -1,5 +1,6 @@
 <template>
-    <scroll-view class="update-applicant">
+  <view class="update-applicant">
+     <scroll-view class="scroll-view" scroll-y>
       <view class="part-title">基本信息</view>
       <nut-cell-group title="">
           <nut-cell title="书式类型" is-link @click="selectBookType">
@@ -168,6 +169,10 @@
       </template>
       <view style="height:50rpx"></view>
     </scroll-view>
+    <view class="footer">
+      保 存
+    </view>
+  </view>
 </template>
 
 <script setup>
@@ -507,52 +512,69 @@ view {
 }
 .update-applicant {
   width: 100vw;
-  overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
-  .part-title {
-    font-size: 28rpx;
-    font-weight: bold;
-    padding: 0 32rpx;
-    line-height: 40rpx;
-    margin-top: 40rpx;
-  }
-  .form-value {
-    color: #333;
-  }
-  .part-box {
-    padding: 0 32rpx;
-    .sub-title {
-      display: flex;
-      align-items: center;
-      font-size: 26rpx;
-      color: #666;
-      margin: 24rpx 0 26rpx;
-      .show-file-template {
-        color: #ff7200;
-        text-decoration: underline;
-      }
+  .scroll-view {
+    flex: 1 1 1px;
+    overflow-y: auto;
+    .part-title {
+      font-size: 28rpx;
+      font-weight: bold;
+      padding: 0 32rpx;
+      line-height: 40rpx;
+      margin-top: 40rpx;
     }
-    .file-box {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, 128rpx);
-      grid-gap: 30rpx;
-      .file-item {
-        width: 128rpx;
-        height: 180rpx;
+    .form-value {
+      color: #333;
+    }
+    .part-box {
+      padding: 0 32rpx;
+      .sub-title {
         display: flex;
         align-items: center;
-        justify-content: center;
-        border-radius: 4rpx;
-        background: #f7f7f7;
-        overflow: hidden;
-        .ivfileItemImageShow {
-          width: 100rpx;
+        font-size: 26rpx;
+        color: #666;
+        margin: 24rpx 0 26rpx;
+        .show-file-template {
+          color: #ff7200;
+          text-decoration: underline;
         }
-        .ivfileItemImageUpload {
-          height: 80rpx;
+      }
+      .file-box {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 128rpx);
+        grid-gap: 30rpx;
+        .file-item {
+          width: 128rpx;
+          height: 180rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4rpx;
+          background: #f7f7f7;
+          overflow: hidden;
+          .ivfileItemImageShow {
+            width: 100rpx;
+          }
+          .ivfileItemImageUpload {
+            height: 80rpx;
+          }
         }
       }
     }
+  }
+  .footer {
+    width: 100%;
+    height: 90rpx;
+    background: #ff9900;
+    border-top: 1px solid #e4e4e4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32rpx;
+    color: #fff;
   }
 }
 </style>
