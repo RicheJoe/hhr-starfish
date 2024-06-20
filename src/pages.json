@@ -1,9 +1,9 @@
 {
   "pages": [
     {
-      "path": "pages/brandRegister/updateApplicant/index",
+      "path": "pages/brandRegister/niceClassify/index",
       "style": {
-        "navigationBarTitleText": "编辑申请人"
+        "navigationBarTitleText": "商品类别选择"
       }
     },
     {
@@ -40,12 +40,6 @@
       "path": "pages/brandRegister/applicantList/index",
       "style": {
         "navigationBarTitleText": "编辑申请人"
-      }
-    },
-    {
-      "path": "pages/brandRegister/niceClassify/index",
-      "style": {
-        "navigationBarTitleText": "商品类别选择"
       }
     }
   ],

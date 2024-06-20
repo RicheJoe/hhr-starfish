@@ -2,7 +2,6 @@
   <view class="content">
     <view class="text-area">
       <text class="title">{{ title }}</text>
-      <img src="/static/images/icon/pay-success.png" alt="" />
     </view>
 
     <nut-button type="primary" @click="toPage('/pages/brandRegister/applicantList/index')"
