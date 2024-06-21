@@ -47,6 +47,12 @@
       "style": {
         "navigationBarTitleText": "申请人"
       }
+    },
+    {
+      "path": "pages/brandRegister/selectCountry/index",
+      "style": {
+        "navigationBarTitleText": "选择国家或地区"
+      }
     }
   ],
   "tabBar": {

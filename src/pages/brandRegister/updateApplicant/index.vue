@@ -3,9 +3,9 @@
      <scroll-view class="scroll-view" scroll-y>
       <view class="part-title">基本信息</view>
       <nut-cell-group title="">
-          <nut-cell title="书式类型" is-link @click="selectBookType">
+          <nut-cell title="书式类型" @click="selectBookType">
              <template #desc>
-                <view class="form-value">{{formData.bookValue}}</view>
+                <view class="form-value">{{formData.bookValue}}<nut-icon name="rect-right" custom-color="#999"></nut-icon></view>
               </template>
           </nut-cell>
           <nut-cell title="申请人类型">
@@ -56,12 +56,13 @@
               </template>
           </nut-cell>
           <!-- //  -->
-          <nut-cell title="营业执照地址" is-link v-if="formData.bookType==1"> 
+          <nut-cell title="营业执照地址" v-if="formData.bookType==1"> 
             <template #desc>
               <picker mode="region" @change="bindRegionChange" :value="[provName,cityName,areaName]">
-                  <view class="picker">
+                  <view class="form-value">
                       <view class="input-placeholder" v-if="!areaName">省/市/区</view>
                       <view class="nut-input" v-if="areaName">{{provName+cityName+areaName}}</view>
+                      <nut-icon name="rect-right" custom-color="#999"></nut-icon>
                   </view>
               </picker>
             </template>
@@ -78,7 +79,7 @@
           </nut-cell>
           <nut-cell title="邮政编码" v-if="formData.bookType==1"> 
             <template #desc>
-                <nut-input v-model="formData.code" input-align="right" type="number" placeholder="请输入邮政编码" placeholder-class="input-placeholder" :border="false" input-class="nut-input"></nut-input>
+              <nut-input v-model="formData.code" input-align="right" type="number" placeholder="请输入邮政编码" placeholder-class="input-placeholder" :border="false" input-class="nut-input"></nut-input>
             </template>
           </nut-cell>
           <nut-cell title="申请人联系地址" v-if="formData.bookType==1"> 
@@ -169,18 +170,19 @@
       </template>
       <view style="height:50rpx"></view>
     </scroll-view>
-    <view class="footer">
+    <view class="footer" @click="submit">
       保 存
     </view>
+    <Modal @handleClick="modalClick" :config="config" />
   </view>
 </template>
 
 <script setup>
-import { niceAllType } from '@/server/applicant'
+import Modal from './components/modal'
+import { getRegions, editApplicant, createApplicant, updateOrderUserOwner, brandSearch, queryBlackListApi } from '@/server/applicant'
 import { fileUrl, uploadFile, imgUrl } from '@/utils/index'
-import { onReady, onLoad } from "@dcloudio/uni-app";
 import { ref } from 'vue'
-const edit = ref(true)
+const edit = ref(null)
 const config = ref({})
 const provName = ref('')
 const cityName = ref('')
@@ -306,7 +308,14 @@ const selectDocType = () => {
   });
 }
 const selectCountryType = () => {
-
+  uni.navigateTo({
+    url: '/pages/brandRegister/selectCountry/index',
+    events: {
+      setCountry(name) {
+        formData.value.country = name
+      }
+    }
+  })
 }
 
 const bindRegionChange = (e) => {
@@ -314,7 +323,7 @@ const bindRegionChange = (e) => {
   cityName.value = e.detail.value[1]
   areaName.value = e.detail.value[2]
   formData.value.code = e.detail.postcode
-  this.getActAreaid(e.detail.value[0], e.detail.value[1], e.detail.value[2])
+  getActAreaid(e.detail.value[0], e.detail.value[1], e.detail.value[2])
 }
 /**动态获取省市区id */
 const getActAreaid = (provName, cityName, areaName) => {
@@ -369,7 +378,7 @@ const getProCityAreaId = () => {
   uni.showLoading({
     title: '加载中',
   })
-  niceAllType({}).then(res => {
+  getRegions({}).then(res => {
     uni.hideLoading()
     var list = res
     var province = []
@@ -437,7 +446,7 @@ const upload = (type, fileType) => {
     itemList: ['拍照', '相册'],
     success(res) {
       if (res.tapIndex == 0) {
-        wx.chooseImage({
+        uni.chooseImage({
           count: 1,
           sourceType: ['camera'],
           success: function (res) {
@@ -445,7 +454,7 @@ const upload = (type, fileType) => {
           }
         })
       } else {
-        wx.chooseImage({
+        uni.chooseImage({
           count: 1,
           sourceType: ['album'],
           success: function (res) {
@@ -491,6 +500,544 @@ const upload = (type, fileType) => {
     })
   }
 }
+
+const checkApplicantInfo = () => {
+  /**个人+大陆 */
+  if (formData.value.applicantType == 0 && formData.value.bookType == 1) {
+    if (!formData.value.applicantName) {
+      uni.showToast({
+        title: '请输入申请人名称',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.idCard) {
+      uni.showToast({
+        title: '请输入身份证号',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.prov) {
+      uni.showToast({
+        title: '请选择营业执照地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.code) {
+      uni.showToast({
+        title: '请输入邮政编码',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantAddress) {
+      uni.showToast({
+        title: '请输入详细地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!util.checkMill(formData.value.applicantAddress)) {
+      uni.showToast({
+        title: '详细地址需包含省市信息',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverAddress) {
+      uni.showToast({
+        title: '请输入申请人联系地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverCode) {
+      uni.showToast({
+        title: '请输入联系地址邮编',
+        icon: 'none'
+      })
+      return false
+    }
+    if (formData.value.domesticReceiverCode.length != 6) {
+      uni.showToast({
+        title: '联系地址邮编应为6位',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverEmail) {
+      uni.showToast({
+        title: '请输入申请人邮箱',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!util.isEmail(formData.value.domesticReceiverEmail)) {
+      uni.showToast({
+        title: '申请人邮箱格式不正确',
+        icon: 'none'
+      })
+      return false
+    }
+  }
+
+  /**企业+大陆 */
+  if (formData.value.applicantType == 1 && formData.value.bookType == 1) {
+    if (!formData.value.applicantName) {
+      uni.showToast({
+        title: '请输入申请人名称',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.idCard) {
+      uni.showToast({
+        title: '请输入统一信用代码',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.prov) {
+      uni.showToast({
+        title: '请选择营业执照地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.code) {
+      uni.showToast({
+        title: '请输入邮政编码',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantAddress) {
+      uni.showToast({
+        title: '请输入详细地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!util.checkMill(formData.value.applicantAddress)) {
+      uni.showToast({
+        title: '详细地址需包含省市信息',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverAddress) {
+      uni.showToast({
+        title: '请输入申请人联系地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverCode) {
+      uni.showToast({
+        title: '请输入联系地址邮编',
+        icon: 'none'
+      })
+      return false
+    }
+    if (formData.value.domesticReceiverCode.length != 6) {
+      uni.showToast({
+        title: '联系地址邮编应为6位',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.domesticReceiverEmail) {
+      uni.showToast({
+        title: '请输入申请人邮箱',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!util.isEmail(formData.value.domesticReceiverEmail)) {
+      uni.showToast({
+        title: '申请人邮箱格式不正确',
+        icon: 'none'
+      })
+      return false
+    }
+  }
+
+  /**个人+海外 */
+  if (formData.value.applicantType == 0 && formData.value.bookType == 2) {
+    if (!formData.value.applicantName) {
+      uni.showToast({
+        title: '请输入申请人姓名',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantEnglishName) {
+      uni.showToast({
+        title: '请输入申请人英文姓名',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.idCard) {
+      uni.showToast({
+        title: '请输入证件号码',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.country || formData.value.country == '请选择国家') {
+      uni.showToast({
+        title: '请选择国家',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantAddress) {
+      uni.showToast({
+        title: '请输入申请人地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantEnglishAddress) {
+      uni.showToast({
+        title: '请输入申请人英文地址',
+        icon: 'none'
+      })
+      return false
+    }
+  }
+
+  /**企业+海外 */
+  if (formData.value.applicantType == 1 && formData.value.bookType == 2) {
+    if (!formData.value.applicantName) {
+      uni.showToast({
+        title: '请输入申请人姓名',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantEnglishName) {
+      uni.showToast({
+        title: '请输入申请人英文姓名',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.country || formData.value.country == '请选择国家') {
+      uni.showToast({
+        title: '请选择国家',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantAddress) {
+      uni.showToast({
+        title: '请输入申请人地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantEnglishAddress) {
+      uni.showToast({
+        title: '请输入申请人英文地址',
+        icon: 'none'
+      })
+      return false
+    }
+  }
+
+  /**港澳台 */
+  if (formData.value.bookType >= 3) {
+    if (!formData.value.applicantName) {
+      uni.showToast({
+        title: '请输入申请人姓名',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!formData.value.applicantAddress) {
+      uni.showToast({
+        title: '请输入申请人地址',
+        icon: 'none'
+      })
+      return false
+    }
+    if (formData.value.subjectType != 1) {
+      if (!formData.value.applicantEnglishName) {
+        uni.showToast({
+          title: '请输入申请人英文姓名',
+          icon: 'none'
+        })
+        return false
+      }
+      if (!formData.value.applicantEnglishAddress) {
+        uni.showToast({
+          title: '请输入申请人英文地址',
+          icon: 'none'
+        })
+        return false
+      }
+    }
+  }
+
+  /**个人+港澳台 */
+  if (formData.value.applicantType == 0 && formData.value.bookType >= 3) {
+    if (!formData.value.idCard) {
+      uni.showToast({
+        title: '请输入证件号码',
+        icon: 'none'
+      })
+      return false
+    }
+  }
+
+  if (!formData.value.contactName) {
+    uni.showToast({
+      title: '请输入联系人姓名',
+      icon: 'none'
+    })
+    return false
+  }
+  if (!formData.value.contactTel || formData.value.contactTel.length != 11 || !formData.value.contactTel.startsWith('1')) {
+    uni.showToast({
+      title: '请输入正确的联系人电话',
+      icon: 'none'
+    })
+    return false
+  }
+  var myreg = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+  if (!myreg.test(formData.value.contactEmail)) {
+    uni.showToast({
+      title: '请输入正确的联系人邮箱',
+      icon: 'none'
+    })
+    return false
+  }
+
+  return true
+}
+
+const submit = () => {
+  if (!checkApplicantInfo()) {
+    return
+  }
+  uni.showLoading({
+    title: '保存中',
+    mask: true
+  })
+  if (edit.value) {
+    if (landOrOutland.value == 0) {
+      let data = {
+        ...formData.value,
+        userId: uni.getStorageSync('userIde'),
+        roleType: 0
+      }
+      editApplicant(data).then(res => {
+        uni.hideLoading()
+        uni.showToast({
+          title: '更新成功',
+        })
+        if (edit.value == 2) {
+          uni.setStorageSync('formData.value', formData.value)
+        }
+        setTimeout(() => {
+          uni.navigateBack({
+            delta: 1,
+          })
+        }, 1000)
+      })
+    } else {
+      editApplicantFn()
+    }
+  } else {
+    let data = {
+      ...formData.value,
+      userId: uni.getStorageSync('userIde'),
+      roleType: 0
+    }
+    createApplicant(data).then(res => {
+      uni.hideLoading()
+      uni.showToast({
+        title: '成功添加\r\n常用申请人',
+      })
+      setTimeout(() => {
+        uni.navigateBack({
+          delta: 1,
+        })
+      }, 1000)
+    })
+  }
+}
+/**点击修改 */
+const editApplicantFn = () => {
+  if (!checkApplicantInfo()) {
+    return
+  }
+  var data = {}
+  data.userIde = uni.getStorageSync('userIde')
+  data.applicantId = formData.value.applicantId
+  data.userName = uni.getStorageSync('userName')
+  data.version = formData.value.version
+  data.diplomatNoe = formData.value.diplomatNoe
+  data.orderNoe = formData.value.diplomatNoe
+  data.isNew = 0
+  data.editType = 0
+  data.module = 'order'
+  // data.type = type.value  // ?
+  data.ownerType = formData.value.applicantType
+  data.bookType = formData.value.bookType
+  data.subjectType = formData.value.subjectType
+  data.domesticReceiverAddress = formData.value.domesticReceiverAddress
+  data.domesticReceiverCode = formData.value.domesticReceiverCode
+  data.domesticReceiverEmail = formData.value.domesticReceiverEmail
+
+  data.contactName = formData.value.contactName
+  data.contactTel = formData.value.contactTel
+  data.contactEmail = formData.value.contactEmail
+  data.code = formData.value.code
+  data.certificatesType = formData.value.certificatesType
+  data.unifiedSocialCreditCode = formData.value.applicantType == 1 ? formData.value.idCard : ""
+  data.applicantName = formData.value.applicantName
+  data.applicantEnglishName = formData.value.applicantEnglishName
+  data.applicantAddress = formData.value.applicantAddress
+  data.applicantEnglishAddress = formData.value.applicantEnglishAddress
+  // data.licensePic = licensePic
+  // data.licenseEnglishPic = licenseEnglishPic
+  // data.idCardPic = idCardPic
+  // data.idCardEnglishPic = idCardEnglishPic
+  data.idCard = formData.value.applicantType == 0 ? formData.value.idCard : ""
+  data.country = formData.value.country
+  data.contactFixedTel = formData.value.contactFixedTel
+  data.prov = formData.value.prov
+  data.city = formData.value.city
+  data.area = formData.value.area
+  data.street = formData.value.applicantAddress
+  const data1 = {
+    ownerType: data.ownerType,
+    applicantName: data.applicantName,
+    identityNo: formData.value.idCard,
+    applicantAddress: formData.value.applicantAddress,
+    bookType: data.bookType,
+  }
+  queryBlackListApi(data1).then(res => {
+    if (res > 0) {
+      uni.hideLoading()
+      config.value = {
+        ifShowModal: true,
+        modalTit: '疑似囤标申请人提示',
+        modalTitColor: '#FF4422',
+        modalTip: '抱歉您所输入的申请人曾属违反商标法第四条、第十五条或第三十二条规定情形，根据商标法及相关规定，权大师拒绝接受该申请人的商标业务委托。如有疑问请联系400-8000-211，感谢理解和支持。',
+        modalTipLeft: true,
+        ifShowBigBtn: true
+      }
+    } else {
+      const data2 = {
+        executor: data.userIde,
+        userId: data.userIde,
+        q: data.applicantName,
+        applicant: data.applicantName,
+        field: 'applicant',
+        page: 0,
+        pageSize: 10
+      }
+      brandSearch(data2).then(res2 => {
+        uni.hideLoading()
+        if (res2.totalResults > 150) {
+          config.value = {
+            ifShowModal: true,
+            modalTit: '疑似囤标申请人提示',
+            modalTitColor: '#FF9900',
+            modalTip: '该申请人名下有大量疑似不以使用为目的的商标注册申请，根据商标法第四条规定，很有可能会被认定为“不以使用为目的的恶意商标注册申请”进而予以驳回。请确认是否继续申请？',
+            modalTipLeft: true,
+            cancelBtnText: '继续申请',
+            sureBtnText: '更换申请人'
+          }
+        } else {
+          uni.showLoading({
+            title: '加载中',
+          })
+          updateOrderUserOwner(data).then(res => {
+            uni.hideLoading()
+            uni.showToast({
+              title: '保存成功',
+              duration: 2000
+            })
+            uni.setStorageSync('editOrderSuccess', 1)
+            uni.navigateBack({
+              delta: 1,
+            })
+          })
+        }
+      })
+    }
+  })
+}
+/**黑名单更换申请人回调 */
+const modalClick = (e) => {
+  if (e.type == 1) {
+    formData.value.idCard = ""
+    formData.value.applicantAddress = ""
+    config.value.ifShowModal = false
+  } else {
+    var data = {}
+    data.userIde = uni.getStorageSync('userIde')
+    data.applicantId = formData.value.applicantId
+    data.userName = uni.getStorageSync('userName')
+    data.version = formData.value.version
+    data.diplomatNoe = formData.value.diplomatNoe
+    data.orderNoe = formData.value.diplomatNoe
+    data.isNew = 0
+    data.editType = 0
+    data.module = 'order'
+    // data.type = type.value // ?
+    data.ownerType = formData.value.applicantType
+    data.bookType = formData.value.bookType
+    data.subjectType = formData.value.subjectType
+    data.domesticReceiverAddress = formData.value.domesticReceiverAddress
+    data.domesticReceiverCode = formData.value.domesticReceiverCode
+    data.domesticReceiverEmail = formData.value.domesticReceiverEmail
+
+    data.contactName = formData.value.contactName
+    data.contactTel = formData.value.contactTel
+    data.contactEmail = formData.value.contactEmail
+    data.code = formData.value.code
+    data.certificatesType = formData.value.certificatesType
+    data.unifiedSocialCreditCode = formData.value.applicantType == 1 ? formData.value.idCard : ""
+    data.applicantName = formData.value.applicantName
+    data.applicantEnglishName = formData.value.applicantEnglishName
+    data.applicantAddress = formData.value.applicantAddress
+    data.applicantEnglishAddress = formData.value.applicantEnglishAddress
+    // data.licensePic = this.data.licensePic
+    // data.licenseEnglishPic = this.data.licenseEnglishPic
+    // data.idCardPic = this.data.idCardPic
+    // data.idCardEnglishPic = this.data.idCardEnglishPic
+    data.idCard = formData.value.applicantType == 0 ? formData.value.idCard : ""
+    data.country = formData.value.country
+    data.contactFixedTel = formData.value.contactFixedTel
+    data.prov = formData.value.prov
+    data.city = formData.value.city
+    data.area = formData.value.area
+    data.street = formData.value.applicantAddress
+    config.value.ifShowModal = false
+    uni.showLoading({
+      title: '加载中',
+    })
+    updateOrderUserOwner(data).then(res => {
+      uni.hideLoading()
+      uni.showToast({
+        title: '保存成功',
+        duration: 2000
+      })
+      uni.setStorageSync('editOrderSuccess', 1)
+      uni.navigateBack({
+        delta: 1,
+      })
+    })
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -528,6 +1075,9 @@ view {
     }
     .form-value {
       color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
     .part-box {
       padding: 0 32rpx;
