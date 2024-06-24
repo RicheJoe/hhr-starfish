@@ -105,7 +105,13 @@
 <script setup>
 import { ref, computed, nextTick, reactive } from "vue";
 import _ from "loadsh";
-import { niceAllType, queryNiceListByName, queryNiceListByFirst } from "@/server/brand.js";
+import {
+  niceAllType,
+  queryNiceListByName,
+  queryNiceListByFirst,
+  benefitsRemain
+} from "@/server/brand.js";
+import { getUserInfo } from "@/utils/index.js";
 import { onReady } from "@dcloudio/uni-app";
 import nextTree from "./components/next-tree/next-tree.vue";
 const searchValue = ref("");
@@ -113,6 +119,16 @@ const niceClassify = ref([]); //尼斯分类
 const checkedCgId = ref(0); //选中的大类ID
 const treeData = ref([]);
 const searchResult = ref([]); //检索的结果
+const starfishDiscountNumber = ref(0); //优惠下单数量
+const queryDiscountNumber = async () => {
+  let res = await benefitsRemain({
+    userId: getUserInfo().userId,
+    productNo: "QPC10324",
+    productAttributeId: 0
+  });
+  starfishDiscountNumber.value = res.remain;
+  console.log("海星会员剩余优惠下单数量:", res.remain);
+};
 //尼斯分类45大类
 const initNiceAllType = async () => {
   let res = await niceAllType({ containThree: 1 });
@@ -226,8 +242,10 @@ const changeCheckCgId = async cgId => {
   } catch (error) {
     console.log(error);
   } finally {
-    uni.hideLoading();
-    console.log(treeData.value, "treeData");
+    nextTick(() => {
+      uni.hideLoading();
+      console.log(treeData.value, "treeData");
+    });
   }
 };
 //点击二级分类
@@ -256,6 +274,7 @@ const changeCheckCgIdL3 = item => {
 
 onReady(() => {
   initNiceAllType();
+  queryDiscountNumber();
 });
 </script>
 

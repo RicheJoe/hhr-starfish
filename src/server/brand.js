@@ -12,3 +12,7 @@ export function queryNiceListByFirst(params) {
 export function queryNiceListByName(params) {
   return getData(params, "product/queryNiceListByName", "post");
 }
+// 获取业务福利可用数 海星270
+export function benefitsRemain(params) {
+  return getData(params, "/legend4/saasmember/benefitsRemain", "post");
+}
