@@ -80,25 +80,40 @@
     </div>
     <view class="footerWrap">
       <view class="fileWrap">
-        <!-- <image src="/images/clickNum1.png" /> -->
-        <image src="@/static/images/brandRegister/clickNum0.png" />
+        <image
+          src="@/static/images/brandRegister/clickNum1.png"
+          v-if="chooseAllList.length"
+          @click="showChooseWrap"
+        />
+        <image src="@/static/images/brandRegister/clickNum0.png" v-else />
         <!-- <text wx:if="{{chooseList.length}}"></text> -->
       </view>
       <view class="clickNumWrap">
         <view class="clickNum">
           <view
-            >合计：<text>￥{{ 1 }}</text></view
+            >合计：<text>￥{{ totalMoney }}</text></view
           >
           <view
-            >已选<text>{{ 2 }}</text
-            >个类别，共<text>{{ 3 }}</text
+            >已选<text>{{ totalNum01 }}</text
+            >个类别，共<text>{{ chooseAllList.length }}</text
             >个小项</view
           >
         </view>
-        <view class="nextBtn {{1}}">保存</view>
+        <view class="nextBtn" @click="saveNiceClassify">保存</view>
       </view>
     </view>
     <nut-safe-area position="bottom" />
+    <chosenModal
+      :showChooseWrap="showChooseWrapVisible"
+      @closeChooseFn="showChooseWrapVisible = false"
+      @clearChooseFn="clearChooseAll"
+      @clearChooseOne="clearChooseOne"
+      @clearChooseL2="clearChooseL2"
+      @clearChooseL3="clearChooseL3"
+      :chooseListL1="niceClassifyListFormat"
+      :chooseAllList="chooseAllList"
+      v-if="showChooseWrapVisible"
+    />
   </view>
 </template>
 
@@ -114,12 +129,16 @@ import {
 import { getUserInfo } from "@/utils/index.js";
 import { onReady } from "@dcloudio/uni-app";
 import nextTree from "./components/next-tree/next-tree.vue";
+import chosenModal from "./components/chosenModal.vue";
 const searchValue = ref("");
 const niceClassify = ref([]); //尼斯分类
 const checkedCgId = ref(0); //选中的大类ID
 const treeData = ref([]);
 const searchResult = ref([]); //检索的结果
 const starfishDiscountNumber = ref(0); //优惠下单数量
+const showChooseWrapVisible = ref(false); //已经选的弹窗
+const chooseListL2 = ref([]);
+//海星会员剩余优惠下单数量
 const queryDiscountNumber = async () => {
   let res = await benefitsRemain({
     userId: getUserInfo().userId,
@@ -135,6 +154,7 @@ const initNiceAllType = async () => {
   res.list.forEach(e => {
     e.checkList = [];
     e.show = true;
+    // e.propsExpand = true;
   });
   niceClassify.value = res.list;
   checkedCgId.value = res.list.length && res.list[0].cgId;
@@ -155,7 +175,31 @@ const initNiceAllType = async () => {
 const l3CheckedNum = computed(() => {
   return item => (item.checkList && item.checkList.length) || 0;
 });
-
+//当前大类已经选中的一级数量
+const totalNum01 = computed(() => {
+  return niceClassify.value.filter(i => i.checkList.length).length;
+});
+//所有大类已经选中的三级数量
+const chooseAllList = computed(() => niceClassify.value.map(i => i.checkList).flat());
+//格式化后的 只保留选择的
+const niceClassifyListFormat = ref([]);
+//所有大类的选中总价
+const totalMoney = computed(() => {
+  //无海星优惠数量没个大类320
+  let eachProductPrice = 32; //每个小件32元
+  //有海星优惠数量每个大类270
+  if (starfishDiscountNumber.value && starfishDiscountNumber.value >= chooseAllList.value) {
+    eachProductPrice = 27;
+  }
+  return niceClassify.value.reduce((pre, cur) => {
+    if (cur.checkList.length > 0) {
+      let num = cur.checkList.length >= 10 ? cur.checkList.length : 10;
+      return pre + num * eachProductPrice;
+    } else {
+      return pre;
+    }
+  }, 0);
+});
 //关键字检索
 const inputSearch = _.debounce(async () => {
   if (!searchValue.value) {
@@ -196,7 +240,7 @@ const echoChecked = res => {
   });
   nextTick(() => {
     if (niceClassify.value.find(i => i.show))
-      changeCheckCgId(niceClassify.value.find(i => i.show).cgId, res);
+      changeCheckCgId(niceClassify.value.find(i => i.show).cgId);
   });
 };
 /**
@@ -204,7 +248,6 @@ const echoChecked = res => {
  * searchRes 选填 为检索的结果 如果没有传 就是点击一级分类
  */
 const changeCheckCgId = async cgId => {
-  console.log("选择的id  ", cgId);
   try {
     uni.showLoading({
       mask: true
@@ -219,7 +262,7 @@ const changeCheckCgId = async cgId => {
 
     //将查询结果挂载到当前选中的一级下
     if (searchResult.value.cgList) {
-      treeData.value = searchResult.value.cgList.find(i => i.cgId == checkedCgId.value).cgList; //TODO:
+      treeData.value = searchResult.value.cgList.find(i => i.cgId == checkedCgId.value).cgList;
     } else {
       treeData.value = res;
     }
@@ -236,15 +279,22 @@ const changeCheckCgId = async cgId => {
             }
           });
       });
+    } else {
+      treeData.value
+        .map(i => i.cgList.flat())
+        .flat()
+        .forEach(i => {
+          i.isChecked = false;
+        });
     }
-
-    console.log("下级：", res);
+    checkedItem.child = treeData.value;
   } catch (error) {
     console.log(error);
   } finally {
     nextTick(() => {
       uni.hideLoading();
-      console.log(treeData.value, "treeData");
+      console.log("选择的id  ", cgId);
+      console.log("下级treeData", treeData.value);
     });
   }
 };
@@ -270,6 +320,74 @@ const changeCheckCgIdL3 = item => {
     }
     console.log(niceClassify.value.find(i => i.cgId == checkedCgId.value).checkList);
   });
+};
+
+const showChooseWrap = () => {
+  //init Data
+
+  let chooseListDate = niceClassify.value.filter(ele => ele.checkList.length);
+
+  const result = chooseListDate
+    .map(item => ({
+      ...item,
+      propsExpand: true,
+      child: item.child
+        .map(c => ({
+          ...c,
+          cgList: c.cgList.filter(cg => cg.isChecked)
+        }))
+        .filter(c => c.cgList.length > 0)
+    }))
+    .filter(item => item.child.length > 0);
+  niceClassifyListFormat.value = result;
+  console.log("niceClassifyListFormat", result);
+  showChooseWrapVisible.value = true;
+};
+//清空所有选中的
+const clearChooseAll = () => {
+  initNiceAllType();
+  niceClassifyListFormat.value = [];
+};
+//清空某一大类
+const clearChooseOne = item => {
+  let handleNice = niceClassify.value.find(i => i.cgId == item.cgId);
+  handleNice.checkList = [];
+  handleNice.isChecked = false;
+  nextTick(() => {
+    console.log(item, "清空某一大类");
+    changeCheckCgId(item.cgId);
+    setTimeout(() => {
+      showChooseWrap();
+    }, 500);
+  });
+};
+//清空某一大类下的二级
+const clearChooseL2 = (classL1, classL2) => {
+  let handleNice = niceClassify.value.find(i => i.cgId == classL1.cgId);
+  handleNice.checkList = handleNice.checkList.filter(i => i.cgParent != classL2.cgId);
+  nextTick(() => {
+    console.log(classL2, "清空某一大类下的二级");
+    changeCheckCgId(classL1.cgId);
+    setTimeout(() => {
+      showChooseWrap();
+    }, 500);
+  });
+};
+//清空某一大类下的三级
+const clearChooseL3 = (classL1, classL2, classL3) => {
+  let handleNice = niceClassify.value.find(i => i.cgId == classL1.cgId);
+  handleNice.checkList = handleNice.checkList.filter(i => i.cgId != classL3.cgId);
+  nextTick(() => {
+    changeCheckCgId(classL1.cgId);
+    setTimeout(() => {
+      showChooseWrap();
+    }, 500);
+  });
+};
+//保存尼斯分类
+const saveNiceClassify = () => {
+  if (!chooseAllList.value) return;
+  console.log(chooseAllList.value, "选中的数据");
 };
 
 onReady(() => {
@@ -323,6 +441,8 @@ onReady(() => {
     align-items: flex-start;
     margin-bottom: 24rpx;
     font-size: 32rpx;
+    flex: 1;
+    padding: 12rpx 0;
     :deep .nut-icon {
       font-size: 24rpx;
       transform: rotate(90deg);
@@ -381,7 +501,7 @@ onReady(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 3;
+  z-index: 12;
 
   image {
     display: block;
