@@ -61,11 +61,15 @@
         </view>
       </view>
     </div>
+
+    <Modal @handleClick="modalClick" :config="confirmPopConfig" />
   </view>
 </template>
 
 <script setup>
 import { defineProps, defineEmits, computed, watch } from "vue";
+import Modal from "@/pages/brandRegister/updateApplicant/components/modal";
+
 const props = defineProps({
   showChooseWrap: { type: Boolean, default: false },
   chooseAllList: { type: Array, default: [] }, //三级所有
@@ -86,11 +90,24 @@ watch(
 );
 
 const closeChooseFn = () => {
-  // console.log(props.chooseListL1);
   emits("closeChooseFn");
 };
+const confirmPopConfig = ref({});
+//清空所有
 const clearChooseFn = () => {
-  emits("clearChooseFn");
+  confirmPopConfig.value = {
+    ifShowModal: true,
+    modalTit: "温馨提示",
+    modalTip: "确定清空文件夹吗"
+  };
+};
+const modalClick = e => {
+  if (e.type == 1) {
+    emits("clearChooseFn");
+    confirmPopConfig.value = { ifShowModal: false };
+  } else {
+    confirmPopConfig.value = { ifShowModal: false };
+  }
 };
 const clearChooseOne = item => {
   emits("clearChooseOne", item);

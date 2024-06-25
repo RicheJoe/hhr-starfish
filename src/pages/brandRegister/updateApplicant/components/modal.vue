@@ -1,34 +1,44 @@
 <template>
-  <div>
-    <view class="modalBg" v-if='config.ifShowModal'>
-        <view class='modalWrap'>
-            <view class="modalTit" :style="{color:config.modalTitColor}">{{config.modalTit}}</view>
-            <view v-if="config.modalTip" class="modalItem modalTip" >
-                <rich-text class="modalTipText" :style="{'text-align':config.modalTipLeft?'left':'center'}" nodes="{{config.modalTip}}"></rich-text>
-            </view>
-            <block v-for='(item) in config.modalKVArr' :key='item.id'>
-                <view class="modalItem modalKV">
-                    <text class="modalKVKey">{{item.key}}</text>
-                    <text class="modalKVValue">{{item.value}}</text>
-                </view>
-            </block>
-            <view class="modalItem modalInp" v-if="config.modalInp">
-                <text class="modalInpKey" v-if="config.modalInp.name">{{config.modalInp.name}}</text>
-                <input class="modalInpCont" :focus="true" :placeholder="config.modalInp.placeholder"
-                   v-model='inpValue' />
-            </view>
-            <view class="modalBtnWrap" v-if="config.ifShowBigBtn">
-                <view class="modalBtn modalBtnBig" @click="clickFn(2)">
-                    {{config.bigSureBtnText?config.bigSureBtnText:'更换申请人'}}</view>
-            </view>
-            <view class="modalBtnWrap" v-else>
-                <view class="modalBtn modalBtnCancel" @click="clickFn(0)" v-if='!config.cancelBtnHidden'>
-                    {{config.cancelBtnText?config.cancelBtnText:'取消'}}</view>
-                <view class="modalBtn" @click="clickFn(1)">{{config.sureBtnText?config.sureBtnText:'确定'}}</view>
-            </view>
+  <view class="modalBg" v-if="config.ifShowModal">
+    <view class="modalWrap">
+      <view class="modalTit" :style="{ color: config.modalTitColor }">{{ config.modalTit }}</view>
+      <view v-if="config.modalTip" class="modalItem modalTip">
+        <text
+          class="modalTipText"
+          :style="{ 'text-align': config.modalTipLeft ? 'left' : 'center' }"
+          >{{ config.modalTip }}</text
+        >
+      </view>
+      <block v-for="item in config.modalKVArr" :key="item.id">
+        <view class="modalItem modalKV">
+          <text class="modalKVKey">{{ item.key }}</text>
+          <text class="modalKVValue">{{ item.value }}</text>
         </view>
+      </block>
+      <view class="modalItem modalInp" v-if="config.modalInp">
+        <text class="modalInpKey" v-if="config.modalInp.name">{{ config.modalInp.name }}</text>
+        <input
+          class="modalInpCont"
+          :focus="true"
+          :placeholder="config.modalInp.placeholder"
+          v-model="inpValue"
+        />
+      </view>
+      <view class="modalBtnWrap" v-if="config.ifShowBigBtn">
+        <view class="modalBtn modalBtnBig" @click="clickFn(2)">
+          {{ config.bigSureBtnText ? config.bigSureBtnText : "更换申请人" }}</view
+        >
+      </view>
+      <view class="modalBtnWrap" v-else>
+        <view class="modalBtn modalBtnCancel" @click="clickFn(0)" v-if="!config.cancelBtnHidden">
+          {{ config.cancelBtnText ? config.cancelBtnText : "取消" }}</view
+        >
+        <view class="modalBtn" @click="clickFn(1)">{{
+          config.sureBtnText ? config.sureBtnText : "确定"
+        }}</view>
+      </view>
     </view>
-  </div>
+  </view>
 </template>
 
 <script setup>
@@ -57,23 +67,44 @@
 // cancelBtnHidden:false 是否隐藏取消按钮
 
 // sureBtnText:''       确定按钮内容
-import { ref } from 'vue'
+import { ref } from "vue";
 defineProps({
   config: {
     type: Object,
     value: {}
   }
-})
-const emits = defineEmits(['handleClick'])
-const inpValue = ref('')
-const clickFn = (type) => {
+});
+const emits = defineEmits(["handleClick"]);
+const inpValue = ref("");
+const clickFn = type => {
   //0是取消按钮 1确定按钮 2点击大按钮
   const data = {
     type: type,
     value: inpValue.value
-  }
-  emits('handleClick', data)
-}
+  };
+
+  emits("handleClick", data);
+};
+
+const resolve = ref(null);
+const reject = ref(null);
+const showModal = options => {
+  props.config.ifShowModal = true;
+  props.config.modalTit = options.title || "提示";
+  props.config.modalTip = options.content || "";
+  return new Promise((resolve, reject) => {
+    resolve.value = resolve;
+    reject.value = reject;
+  });
+};
+const handleCancel = () => {
+  props.config.ifShowModal = false;
+  reject.value({ cancel: true });
+};
+const handleConfirm = () => {
+  props.config.ifShowModal = false;
+  resolve.value({ confirm: true });
+};
 </script>
 
 <style lang="scss" scoped>

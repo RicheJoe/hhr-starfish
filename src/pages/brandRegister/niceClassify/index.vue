@@ -18,6 +18,11 @@
       </template>
     </nut-searchbar>
 
+    <view class="noMsgTip" v-if="noSearchRes">
+      <nut-icon name="issue" custom-color="#fa2c19"></nut-icon>
+      <text>没有包含上述关键词的商品或服务</text>
+    </view>
+
     <!-- 尼斯分类-->
     <div class="nice-all">
       <div class="nice-all-level-1">
@@ -32,6 +37,7 @@
           <nut-badge :value="l3CheckedNum(item)">
             <view> {{ item.cgNum + " " + item.cgName }} </view>
           </nut-badge>
+          <view class="ifSearch" v-show="searchResult.length"></view>
         </div>
       </div>
 
@@ -59,6 +65,7 @@
               expand: item.isExpand
             }"
           >
+            <view class="ifSearch" v-show="searchResult.length"></view>
             <nut-icon name="triangle-up" custom-color="#e4e4e4"></nut-icon>
             <view style="flex: 1">{{ item.cgNum + " " + item.cgName }}</view>
           </div>
@@ -131,6 +138,7 @@ import { onReady } from "@dcloudio/uni-app";
 import nextTree from "./components/next-tree/next-tree.vue";
 import chosenModal from "./components/chosenModal.vue";
 const searchValue = ref("");
+const noSearchRes = ref(false);
 const niceClassify = ref([]); //尼斯分类
 const checkedCgId = ref(0); //选中的大类ID
 const treeData = ref([]);
@@ -138,6 +146,7 @@ const searchResult = ref([]); //检索的结果
 const starfishDiscountNumber = ref(0); //优惠下单数量
 const showChooseWrapVisible = ref(false); //已经选的弹窗
 const chooseListL2 = ref([]);
+
 //海星会员剩余优惠下单数量
 const queryDiscountNumber = async () => {
   let res = await benefitsRemain({
@@ -207,6 +216,7 @@ const inputSearch = _.debounce(async () => {
       i.show = true; //全部展开
     });
     searchResult.value = [];
+    noSearchRes.value = false;
     //清空筛选 默认选一
     nextTick(() => {
       changeCheckCgId(niceClassify.value[0].cgId);
@@ -217,11 +227,16 @@ const inputSearch = _.debounce(async () => {
     cgName: searchValue.value,
     containOther: 0
   });
-  console.log("检索：", searchValue.value, res);
-  treeData.value = [];
-  searchResult.value = res;
+  if (!res.cgList.length) {
+    noSearchRes.value = true;
+  } else {
+    noSearchRes.value = false;
+    treeData.value = [];
+    searchResult.value = res.cgList;
+    console.log("检索：", searchValue.value, searchResult.value);
+    echoChecked();
+  }
 
-  echoChecked();
   // return res;
 }, 300);
 //根据检索结果 或者 保存的结果回显
@@ -231,7 +246,7 @@ const echoChecked = res => {
   niceClassify.value.forEach(e => {
     e.show = false; //默认隐藏一级
   });
-  res.cgList.forEach(ele => {
+  res.forEach(ele => {
     niceClassify.value.forEach(e => {
       if (e.cgId == ele.cgId) {
         e.show = true; //查询到的一级显示
@@ -261,12 +276,19 @@ const changeCheckCgId = async cgId => {
     });
 
     //将查询结果挂载到当前选中的一级下
-    treeData.value = searchResult.value.cgList
-      ? searchResult.value.cgList.find(item => item.cgId === cgId).cgList
+    treeData.value = searchResult.value.length
+      ? searchResult.value.find(item => item.cgId === cgId).cgList
       : res;
 
+    console.log(
+      searchResult.value,
+      111,
+      searchResult.value.find(item => item.cgId === cgId),
+      treeData.value
+    );
+
     //如果当前选择一级有之前选中的 还要默认选中
-    const allChildItems = treeData.value.flatMap(item => item.cgList.flat());
+    const allChildItems = treeData.value.map(item => item.cgList.flat()).flat();
 
     const checkedIds = new Set(checkedItem.checkList.map(item => item.cgId));
     allChildItems.forEach(item => {
@@ -307,7 +329,6 @@ const changeCheckCgIdL3 = item => {
     console.log(niceClassify.value.find(i => i.cgId == checkedCgId.value).checkList);
   });
 };
-
 const showChooseWrap = () => {
   if (showChooseWrapVisible.value) return;
   //清空筛选
@@ -416,10 +437,20 @@ onReady(() => {
   .nice-all-level-1-name {
     padding: 24rpx;
     overflow-y: auto;
+    position: relative;
   }
   .nice-all-level-1-name.active {
     color: #ff7200;
     background-color: #f5f5f5;
+  }
+  .ifSearch {
+    width: 8rpx;
+    height: 8rpx;
+    border-radius: 50%;
+    background: #ff9900;
+    position: absolute;
+    left: 10rpx;
+    top: 42rpx;
   }
 
   // 右侧
@@ -436,12 +467,17 @@ onReady(() => {
     font-size: 32rpx;
     flex: 1;
     padding: 12rpx 0;
+    position: relative;
     :deep .nut-icon {
       font-size: 24rpx;
       transform: rotate(90deg);
       transition: transform 0.3s ease;
       display: inline-block;
       width: 64rpx;
+    }
+    .ifSearch {
+      top: 24rpx;
+      left: 8rpx;
     }
   }
   .l2-title.active {
@@ -552,5 +588,20 @@ onReady(() => {
   text-align: center;
   line-height: 80rpx;
   color: #fff;
+}
+
+.noMsgTip {
+  margin: 4rpx auto 0;
+  width: 680rpx;
+  height: 48rpx;
+  background: #ffece8;
+  display: flex;
+  align-items: center;
+}
+
+.noMsgTip text {
+  margin-left: 15rpx;
+  font-size: 24rpx;
+  color: #ff4422;
 }
 </style>
