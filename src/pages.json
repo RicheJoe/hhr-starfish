@@ -37,12 +37,6 @@
       }
     },
     {
-      "path": "pages/brandRegister/applicantList/index",
-      "style": {
-        "navigationBarTitleText": "申请人"
-      }
-    },
-    {
       "path": "pages/brandRegister/updateApplicant/index",
       "style": {
         "navigationBarTitleText": "编辑申请人"
@@ -52,6 +46,18 @@
       "path": "pages/brandRegister/selectCountry/index",
       "style": {
         "navigationBarTitleText": "选择国家或地区"
+      }
+    },
+    {
+      "path": "pages/brandRegister/applicantDetail/index",
+      "style": {
+        "navigationBarTitleText": "申请人详情"
+      }
+    },
+    {
+      "path": "pages/brandRegister/applicantList/index",
+      "style": {
+        "navigationBarTitleText": "申请人"
       }
     }
   ],
