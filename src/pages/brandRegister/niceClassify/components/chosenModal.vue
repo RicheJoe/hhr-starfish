@@ -14,8 +14,8 @@
         ></image>
       </view>
 
-      <view class="chooseList">
-        <view class="choose01Item" v-for="item in chooseListL1" :key="item.cgId">
+      <view class="chooseList" v-if="chooseList.length">
+        <view class="choose01Item" v-for="item in chooseList" :key="item.cgId">
           <view class="chooseTitle">
             <view class="chooseTitleLeft" @click="changeExpand(item)">
               <view>
@@ -37,10 +37,11 @@
               <text>清空</text>
             </view>
           </view>
-
-          <view class="chooseList-l2" v-show="item.propsExpand">
-            <block v-for="item2 in item.child" :key="item2.cgId">
-              <view class="chooseList-l2-item">
+          {{ item.cgList }}
+          <view class="chooseList-l2">
+            <block v-for="item2 in item.cgList" :key="item2.cgId">
+              {{ item2.cgList }}
+              <!-- <view class="chooseList-l2-item">
                 <text></text>
                 <text>{{ item2.cgNum + item2.cgName }}</text>
                 <text>({{ item2.cgList.length }})</text>
@@ -49,13 +50,14 @@
                   @click="clearChooseL2(item, item2)"
                 ></image>
               </view>
+
               <view class="chooseList-l3-item" v-for="item3 in item2.cgList" :key="item3.cgId">
                 <text>{{ item3.cgNum + item3.cgName }}</text>
                 <image
                   src="@/static/images/brandRegister/closeG.png"
                   @click="clearChooseL3(item, item2, item3)"
                 ></image>
-              </view>
+              </view> -->
             </block>
           </view>
         </view>
@@ -67,11 +69,12 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import Modal from "@/pages/brandRegister/updateApplicant/components/modal";
 
 const props = defineProps({
   showChooseWrap: { type: Boolean, default: false },
+  niceClassifyListFormat: { type: Array, default: [] }, //选中数据的格式化
   chooseAllList: { type: Array, default: [] }, //三级所有
   chooseListL1: { type: Array, default: [] }, //一级分类
   chooseListL2: { type: Array, default: [] }
@@ -81,12 +84,53 @@ const isVisible = computed(() => {
   return props.showChooseWrap;
 });
 
+const chooseList = ref([]);
 watch(
-  isVisible,
-  val => {
-    // console.log(val, "sdsds");
-  },
-  { immediate: true }
+  () => props.niceClassifyListFormat,
+  n => {
+    //处理传入的选中值 为三级结构
+    chooseList.value = n.map(item => {
+      let res = JSON.parse(JSON.stringify(item));
+      //获取二级数据 TODO:
+
+      // let resL2List = res.checkList.map(i => i.parents).flat(Infinity);
+      // console.log(resL2List, "l2");
+
+      // const resL2ListUnique = resL2List.reduce((accumulator, currentValue) => {
+      //   if (!accumulator.some(item => item.cgNum === currentValue.cgNum)) {
+      //     accumulator.push(currentValue);
+      //   }
+      //   return accumulator;
+      // }, []); // 初始累加器是一个空数组
+
+      // console.log(resL2ListUnique);
+
+      // resL2ListUnique.forEach(element => {
+      //   element.cgList = res.checkList
+      //     .filter(i => i.cgParent == element.cgId)
+      //     .forEach(i => {
+      //       delete i.parents;
+      //     });
+      // });
+
+      // let chooseListL2 = res.checkList[0].parents[0];
+      // let checkItemList = JSON.parse(JSON.stringify(res.checkList));
+      // checkItemList.forEach(item => {
+      //   delete item.parents;
+      // });
+      // console.log("checkItemList,", checkItemList);
+      // chooseListL2.cgList = checkItemList;
+      // res.cgList = chooseListL2;
+      // // console.log(item, chooseListL2, "chooseListL2chooseListL2chooseListL2");
+      // // return Object.assign(item, chooseListL2);
+
+      // // return Object.assign(item, chooseListL2);
+      // console.log(res);
+      return resL2ListUnique;
+    });
+
+    console.log(chooseList.value, "cgListcgListcgList");
+  }
 );
 
 const closeChooseFn = () => {

@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <!-- <div class="nice-level-child">
+      <div class="nice-level-child">
         <next-tree
           :selectParent="false"
           :checkStrictly="true"
@@ -52,10 +52,22 @@
           valueKey="cgId"
           labelKey="cgName"
           childrenKey="cgList"
-        />
-      </div> -->
+          @change="niceChange"
+        >
+          <template v-slot:label="{ data: { cgName, cgNum, dirLevel } }">
+            <view class="line-block" style="width: 90%">
+              <view
+                class="ifSearch"
+                v-if="searchResult.length && dirLevel == 1"
+                style="position: relative; top: 18rpx; left: -48rpx"
+              ></view>
+              <text>{{ cgNum }} {{ cgName }}</text>
+            </view>
+          </template>
+        </next-tree>
+      </div>
 
-      <div class="nice-level-child" v-if="treeData">
+      <!-- <div class="nice-level-child" v-if="treeData">
         <div v-for="item in treeData" :key="item.cgId" class="nice-all-level-2-name">
           <div
             class="l2-title"
@@ -83,7 +95,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
     <view class="footerWrap">
       <view class="fileWrap">
@@ -113,14 +125,15 @@
     <chosenModal
       :showChooseWrap="showChooseWrapVisible"
       @closeChooseFn="showChooseWrapVisible = false"
-      @clearChooseFn="clearChooseAll"
+      :niceClassifyListFormat="niceClassifyListFormat"
+    />
+    <!-- @clearChooseFn="clearChooseAll"
       @clearChooseOne="clearChooseOne"
       @clearChooseL2="clearChooseL2"
       @clearChooseL3="clearChooseL3"
       :chooseListL1="niceClassifyListFormat"
       :chooseAllList="chooseAllList"
-      v-if="showChooseWrapVisible"
-    />
+      v-if="showChooseWrapVisible" -->
   </view>
 </template>
 
@@ -161,9 +174,8 @@ const queryDiscountNumber = async () => {
 const initNiceAllType = async () => {
   let res = await niceAllType({ containThree: 1 });
   res.list.forEach(e => {
-    e.checkList = [];
-    e.show = true;
-    // e.propsExpand = true;
+    e.checkList = []; //选中的数据
+    e.show = true; //是否展示 后面筛选用到
   });
   niceClassify.value = res.list;
   checkedCgId.value = res.list.length && res.list[0].cgId;
@@ -181,7 +193,7 @@ const initNiceAllType = async () => {
 // );
 
 //当前大类已经选中的三级数量
-const l3CheckedNum = computed(() => {
+const l3CheckedNum = computed(item => {
   return item => (item.checkList && item.checkList.length) || 0;
 });
 //当前大类已经选中的一级数量
@@ -268,7 +280,6 @@ const changeCheckCgId = async cgId => {
       mask: true
     });
     checkedCgId.value = cgId;
-    let checkedItem = niceClassify.value.find(i => i.cgId == checkedCgId.value);
 
     let res = await queryNiceListByFirst({
       cgId: cgId,
@@ -280,22 +291,16 @@ const changeCheckCgId = async cgId => {
       ? searchResult.value.find(item => item.cgId === cgId).cgList
       : res;
 
-    console.log(
-      searchResult.value,
-      111,
-      searchResult.value.find(item => item.cgId === cgId),
-      treeData.value
-    );
-
-    //如果当前选择一级有之前选中的 还要默认选中
-    const allChildItems = treeData.value.map(item => item.cgList.flat()).flat();
-
-    const checkedIds = new Set(checkedItem.checkList.map(item => item.cgId));
-    allChildItems.forEach(item => {
-      item.isChecked = checkedIds.has(item.cgId);
+    let checkedItem = niceClassify.value.find(i => i.cgId == checkedCgId.value);
+    checkedItem.checkList.forEach(item => {
+      treeData.value.forEach(ele => {
+        ele.cgList.forEach(e => {
+          if (e.cgId == item.cgId) {
+            e.checked = true;
+          }
+        });
+      });
     });
-
-    checkedItem.child = treeData.value;
   } catch (error) {
     console.log(error);
   } finally {
@@ -334,27 +339,9 @@ const showChooseWrap = () => {
   //清空筛选
   searchValue.value = "";
   inputSearch();
-  //format Data
-  let chooseListDate = niceClassify.value.filter(ele => ele.checkList.length);
+  niceClassifyListFormat.value = niceClassify.value.filter(i => i.checkList.length);
+  console.log("niceClassifyListFormat", niceClassifyListFormat.value);
 
-  const result = chooseListDate
-    .map(item => {
-      // 过滤并保留只包含被选中的 cgList 的 child 项
-      const filteredChildren = item.child
-        .map(c => ({
-          ...c,
-          cgList: c.cgList.filter(cg => cg.isChecked)
-        }))
-        .filter(c => c.cgList.length > 0);
-
-      // 返回新的 item 对象，只有在有有效子项时才会保留
-      return filteredChildren.length > 0
-        ? { ...item, propsExpand: true, child: filteredChildren }
-        : null;
-    })
-    .filter(item => item !== null);
-  niceClassifyListFormat.value = result;
-  console.log("niceClassifyListFormat", result);
   showChooseWrapVisible.value = true;
 };
 //清空所有选中的
@@ -402,6 +389,14 @@ const clearChooseL3 = (classL1, classL2, classL3) => {
 const saveNiceClassify = () => {
   if (!chooseAllList.value) return;
   console.log(chooseAllList.value, "选中的数据");
+};
+
+//树选择 res只有当前大类的数据
+const niceChange = res => {
+  console.log("当前大类选中的数据", res);
+  niceClassify.value.find(i => i.cgId == checkedCgId.value).checkList = res.filter(
+    i => i.dirLevel == 2
+  );
 };
 
 onReady(() => {
@@ -475,9 +470,10 @@ onReady(() => {
       display: inline-block;
       width: 64rpx;
     }
-    .ifSearch {
+    :v-deep.ifSearch {
+      position: relative;
       top: 24rpx;
-      left: 8rpx;
+      left: -10rpx;
     }
   }
   .l2-title.active {

@@ -101,11 +101,10 @@
                       :selectable="false"
                       v-else-if="ifSearch && searchModel === 'depHighlight' && keywords"
                     ></rich-text>
-                    <slot
-                      v-else-if="$slots.label"
-                      name="label"
-                      :data="_getLabelSlotData(item)"
-                    ></slot>
+                    <view v-else-if="$slots.label">
+                      <slot name="label" :data="_getLabelSlotData(item)"></slot>
+                    </view>
+
                     <rich-text
                       v-else-if="item.checked && !item.disabled"
                       :nodes="getThemeNodes(item.name)"
@@ -684,7 +683,8 @@ export default {
           parentid.push(item[this.valueKey]);
           parentArr.push({
             [this.valueKey]: item[this.valueKey],
-            [this.labelKey]: item[this.labelKey]
+            [this.labelKey]: item[this.labelKey],
+            cgNum: item.cgNum //特殊处理 TD 需求 后期优化为props
           });
           this._renderTreeList(item[this.childrenKey], rank + 1, parentid, parentArr);
         } else if (item[this.childrenKey] === null) {
