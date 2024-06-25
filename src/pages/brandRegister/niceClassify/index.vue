@@ -261,32 +261,18 @@ const changeCheckCgId = async cgId => {
     });
 
     //将查询结果挂载到当前选中的一级下
-    if (searchResult.value.cgList) {
-      treeData.value = searchResult.value.cgList.find(i => i.cgId == checkedCgId.value).cgList;
-    } else {
-      treeData.value = res;
-    }
+    treeData.value = searchResult.value.cgList
+      ? searchResult.value.cgList.find(item => item.cgId === cgId).cgList
+      : res;
 
     //如果当前选择一级有之前选中的 还要默认选中
-    if (checkedItem.checkList.length) {
-      checkedItem.checkList.forEach(item => {
-        treeData.value
-          .map(i => i.cgList.flat())
-          .flat()
-          .forEach(i => {
-            if (i.cgId == item.cgId) {
-              i.isChecked = true;
-            }
-          });
-      });
-    } else {
-      treeData.value
-        .map(i => i.cgList.flat())
-        .flat()
-        .forEach(i => {
-          i.isChecked = false;
-        });
-    }
+    const allChildItems = treeData.value.flatMap(item => item.cgList.flat());
+
+    const checkedIds = new Set(checkedItem.checkList.map(item => item.cgId));
+    allChildItems.forEach(item => {
+      item.isChecked = checkedIds.has(item.cgId);
+    });
+
     checkedItem.child = treeData.value;
   } catch (error) {
     console.log(error);
@@ -323,22 +309,29 @@ const changeCheckCgIdL3 = item => {
 };
 
 const showChooseWrap = () => {
-  //init Data
-
+  if (showChooseWrapVisible.value) return;
+  //清空筛选
+  searchValue.value = "";
+  inputSearch();
+  //format Data
   let chooseListDate = niceClassify.value.filter(ele => ele.checkList.length);
 
   const result = chooseListDate
-    .map(item => ({
-      ...item,
-      propsExpand: true,
-      child: item.child
+    .map(item => {
+      // 过滤并保留只包含被选中的 cgList 的 child 项
+      const filteredChildren = item.child
         .map(c => ({
           ...c,
           cgList: c.cgList.filter(cg => cg.isChecked)
         }))
-        .filter(c => c.cgList.length > 0)
-    }))
-    .filter(item => item.child.length > 0);
+        .filter(c => c.cgList.length > 0);
+
+      // 返回新的 item 对象，只有在有有效子项时才会保留
+      return filteredChildren.length > 0
+        ? { ...item, propsExpand: true, child: filteredChildren }
+        : null;
+    })
+    .filter(item => item !== null);
   niceClassifyListFormat.value = result;
   console.log("niceClassifyListFormat", result);
   showChooseWrapVisible.value = true;
