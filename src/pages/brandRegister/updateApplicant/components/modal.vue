@@ -1,5 +1,5 @@
 <template>
-  <view class="modalBg" v-if="config.ifShowModal">
+  <view class="modalBg" v-if="config.ifShowModal" ref="modalRef">
     <view class="modalWrap">
       <view class="modalTit" :style="{ color: config.modalTitColor }">{{ config.modalTit }}</view>
       <view v-if="config.modalTip" class="modalItem modalTip">
@@ -67,13 +67,24 @@
 // cancelBtnHidden:false 是否隐藏取消按钮
 
 // sureBtnText:''       确定按钮内容
-import { ref } from "vue";
-defineProps({
+import { ref, watch, nextTick } from "vue";
+const modalRef = ref(null);
+const props = defineProps({
   config: {
     type: Object,
     value: {}
   }
 });
+watch(
+  () => props.config.ifShowModal,
+  newVal => {
+    if (newVal) {
+      nextTick(() => {
+        document.body.appendChild(modalRef.value.$el);
+      });
+    }
+  }
+);
 const emits = defineEmits(["handleClick"]);
 const inpValue = ref("");
 const clickFn = type => {
