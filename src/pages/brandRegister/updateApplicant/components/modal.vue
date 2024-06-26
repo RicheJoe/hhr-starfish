@@ -67,6 +67,8 @@
 // cancelBtnHidden:false 是否隐藏取消按钮
 
 // sureBtnText:''       确定按钮内容
+
+//appendToBody    是否插入body wx不可用
 import { ref, watch, nextTick } from "vue";
 const modalRef = ref(null);
 const props = defineProps({
@@ -80,7 +82,7 @@ watch(
   newVal => {
     if (newVal) {
       nextTick(() => {
-        document.body.appendChild(modalRef.value.$el);
+        if (newVal.appendToBody) document.body.appendChild(modalRef.value.$el);
       });
     }
   }

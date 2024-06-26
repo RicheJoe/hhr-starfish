@@ -101,6 +101,13 @@
       @clearChooseL2="clearChooseL2"
       @clearChooseL3="clearChooseL3"
     />
+
+    <nut-dialog
+      title="温馨提示"
+      content="确定清空文件夹吗"
+      v-model:visible="confirmPopVisible"
+      @ok="modalClickOk"
+    />
   </view>
 </template>
 
@@ -117,6 +124,7 @@ import { getUserInfo } from "@/utils/index.js";
 import { onReady } from "@dcloudio/uni-app";
 import nextTree from "./components/next-tree/next-tree.vue";
 import chosenModal from "./components/chosenModal.vue";
+
 const searchValue = ref("");
 const noSearchRes = ref(false);
 const niceClassify = ref([]); //尼斯分类
@@ -273,8 +281,8 @@ const changeCheckCgId = async cgId => {
   } finally {
     nextTick(() => {
       uni.hideLoading();
-      console.log("选择的id  ", cgId);
-      console.log("下级treeData", treeData.value);
+      // console.log("选择的id  ", cgId);
+      // console.log("下级treeData", treeData.value);
     });
   }
 };
@@ -311,10 +319,19 @@ const showChooseWrap = () => {
 
   showChooseWrapVisible.value = true;
 };
+//确认弹窗
+const confirmPopVisible = ref(false);
 //清空所有选中的
 const clearChooseAll = () => {
+  confirmPopVisible.value = true;
+};
+const modalClickOk = e => {
+  //清空当前所有
   initNiceAllType();
   niceClassifyListFormat.value = [];
+  nextTick(() => {
+    confirmPopVisible.value = false;
+  });
 };
 //清空某一大类
 const clearChooseOne = item => {

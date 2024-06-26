@@ -65,15 +65,11 @@
         </view>
       </view>
     </div>
-
-    <Modal @handleClick="modalClick" :config="confirmPopConfig" />
   </view>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import Modal from "@/pages/brandRegister/updateApplicant/components/modal";
-
 const props = defineProps({
   showChooseWrap: { type: Boolean, default: false },
   niceClassifyListFormat: { type: Array, default: [] }, //选中数据的格式化
@@ -111,7 +107,6 @@ watch(
 
       item.cgList = resL2ListUnique;
       item.propsExpand = true;
-      console.log(item, "format item");
     });
     chooseList.value = JSON.parse(JSON.stringify(n));
   }
@@ -124,22 +119,9 @@ const closeChooseFn = () => {
 const confirmPopConfig = ref({});
 //清空所有
 const clearChooseAll = () => {
-  confirmPopConfig.value = {
-    ifShowModal: true,
-    modalTit: "温馨提示",
-    modalTip: "确定清空文件夹吗"
-  };
+  emits("clearChooseAll");
 };
-const modalClick = e => {
-  if (e.type == 1) {
-    //清空当前所有
-    chooseList.value = [];
-    emits("clearChooseAll");
-    confirmPopConfig.value = { ifShowModal: false };
-  } else {
-    confirmPopConfig.value = { ifShowModal: false };
-  }
-};
+
 //清空一大类
 const clearChooseOne = (item, ind) => {
   chooseList.value.splice(ind, 1);
