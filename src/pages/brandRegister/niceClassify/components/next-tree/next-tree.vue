@@ -1219,7 +1219,6 @@ export default {
     }
   },
   mounted() {
-    console.log("----------next-tree组件完成挂载demo------------");
     this.uiModeInit();
   }
 };

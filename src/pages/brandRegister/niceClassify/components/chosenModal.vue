@@ -3,7 +3,7 @@
     <div class="custom-content">
       <view class="chooseHead">
         <view>已选择类别服务项</view>
-        <view @click="clearChooseFn">
+        <view @click="clearChooseAll">
           <image mode="widthFix" src="@/static/images/brandRegister/clear.png"></image>
           <text>清空文件夹</text>
         </view>
@@ -14,9 +14,9 @@
         ></image>
       </view>
 
-      <view class="chooseList" v-if="chooseList.length">
-        <view class="choose01Item" v-for="item in chooseList" :key="item.cgId">
-          <view class="chooseTitle">
+      <view class="chooseList">
+        <view class="choose01Item" v-for="(item, ind) in chooseList" :key="item.cgId">
+          <view class="chooseTitle" v-if="item.cgList.length">
             <view class="chooseTitleLeft" @click="changeExpand(item)">
               <view>
                 <image
@@ -32,32 +32,34 @@
               </view>
               <text>{{ item.cgNum }} {{ item.cgName }}</text>
             </view>
-            <view class="chooseTitleRight" @click="clearChooseOne(item)">
+            <view class="chooseTitleRight" @click="clearChooseOne(item, ind)">
               <image src="@/static/images/brandRegister/delete.png"></image>
               <text>清空</text>
             </view>
           </view>
-          {{ item.cgList }}
-          <view class="chooseList-l2">
-            <block v-for="item2 in item.cgList" :key="item2.cgId">
-              {{ item2.cgList }}
-              <!-- <view class="chooseList-l2-item">
+          <view class="chooseList-l2" v-if="item.propsExpand">
+            <block v-for="(item2, ind2) in item.cgList" :key="item2.cgId">
+              <view class="chooseList-l2-item" v-if="item2.cgList.length">
                 <text></text>
                 <text>{{ item2.cgNum + item2.cgName }}</text>
                 <text>({{ item2.cgList.length }})</text>
                 <image
                   src="@/static/images/brandRegister/closeG.png"
-                  @click="clearChooseL2(item, item2)"
+                  @click="clearChooseL2(item, item2, ind2)"
                 ></image>
               </view>
 
-              <view class="chooseList-l3-item" v-for="item3 in item2.cgList" :key="item3.cgId">
+              <view
+                class="chooseList-l3-item"
+                v-for="(item3, ind3) in item2.cgList"
+                :key="item3.cgId"
+              >
                 <text>{{ item3.cgNum + item3.cgName }}</text>
                 <image
                   src="@/static/images/brandRegister/closeG.png"
-                  @click="clearChooseL3(item, item2, item3)"
+                  @click="clearChooseL3(item, item2, ind2, item3, ind3)"
                 ></image>
-              </view> -->
+              </view>
             </block>
           </view>
         </view>
@@ -89,56 +91,39 @@ watch(
   () => props.niceClassifyListFormat,
   n => {
     //处理传入的选中值 为三级结构
-    chooseList.value = n.map(item => {
+    n.map(item => {
       let res = JSON.parse(JSON.stringify(item));
-      //获取二级数据 TODO:
+      //获取二级数据
+      let resL2List = res.checkList.map(i => i.parents).flat(Infinity);
+      const resL2ListUnique = resL2List.reduce((accumulator, currentValue) => {
+        if (!accumulator.some(item => item.cgNum === currentValue.cgNum)) {
+          accumulator.push(currentValue);
+        }
+        return accumulator;
+      }, []);
 
-      // let resL2List = res.checkList.map(i => i.parents).flat(Infinity);
-      // console.log(resL2List, "l2");
+      resL2ListUnique.forEach(element => {
+        res.checkList.forEach(i => {
+          delete i.parents;
+        });
+        element.cgList = res.checkList.filter(i => i.cgParent == element.cgId);
+      });
 
-      // const resL2ListUnique = resL2List.reduce((accumulator, currentValue) => {
-      //   if (!accumulator.some(item => item.cgNum === currentValue.cgNum)) {
-      //     accumulator.push(currentValue);
-      //   }
-      //   return accumulator;
-      // }, []); // 初始累加器是一个空数组
-
-      // console.log(resL2ListUnique);
-
-      // resL2ListUnique.forEach(element => {
-      //   element.cgList = res.checkList
-      //     .filter(i => i.cgParent == element.cgId)
-      //     .forEach(i => {
-      //       delete i.parents;
-      //     });
-      // });
-
-      // let chooseListL2 = res.checkList[0].parents[0];
-      // let checkItemList = JSON.parse(JSON.stringify(res.checkList));
-      // checkItemList.forEach(item => {
-      //   delete item.parents;
-      // });
-      // console.log("checkItemList,", checkItemList);
-      // chooseListL2.cgList = checkItemList;
-      // res.cgList = chooseListL2;
-      // // console.log(item, chooseListL2, "chooseListL2chooseListL2chooseListL2");
-      // // return Object.assign(item, chooseListL2);
-
-      // // return Object.assign(item, chooseListL2);
-      // console.log(res);
-      return resL2ListUnique;
+      item.cgList = resL2ListUnique;
+      item.propsExpand = true;
+      console.log(item, "format item");
     });
-
-    console.log(chooseList.value, "cgListcgListcgList");
+    chooseList.value = JSON.parse(JSON.stringify(n));
   }
 );
 
+//关闭页面
 const closeChooseFn = () => {
   emits("closeChooseFn");
 };
 const confirmPopConfig = ref({});
 //清空所有
-const clearChooseFn = () => {
+const clearChooseAll = () => {
   confirmPopConfig.value = {
     ifShowModal: true,
     modalTit: "温馨提示",
@@ -147,31 +132,41 @@ const clearChooseFn = () => {
 };
 const modalClick = e => {
   if (e.type == 1) {
-    emits("clearChooseFn");
+    //清空当前所有
+    chooseList.value = [];
+    emits("clearChooseAll");
     confirmPopConfig.value = { ifShowModal: false };
   } else {
     confirmPopConfig.value = { ifShowModal: false };
   }
 };
-const clearChooseOne = item => {
+//清空一大类
+const clearChooseOne = (item, ind) => {
+  chooseList.value.splice(ind, 1);
   emits("clearChooseOne", item);
 };
-const clearChooseL2 = (item, item2) => {
+//清空二级类别
+const clearChooseL2 = (item, item2, ind2) => {
+  item.cgList.splice(ind2, 1);
   emits("clearChooseL2", item, item2);
 };
-const clearChooseL3 = (item, item2, item3) => {
+//清空三级类别
+const clearChooseL3 = (item, item2, ind2, item3, ind3) => {
+  item2.cgList.splice(ind3, 1);
+  if (item2.cgList.length == 0) {
+    item.cgList.splice(ind2, 1);
+  }
   emits("clearChooseL3", item, item2, item3);
 };
 const emits = defineEmits([
   "closeChooseFn",
-  "clearChooseFn",
+  "clearChooseAll",
   "clearChooseOne",
   "clearChooseL2",
   "clearChooseL3"
 ]);
 const changeExpand = item => {
   item.propsExpand = !item.propsExpand;
-  // console.log(item.propsExpand);
 };
 </script>
 

@@ -66,36 +66,6 @@
           </template>
         </next-tree>
       </div>
-
-      <!-- <div class="nice-level-child" v-if="treeData">
-        <div v-for="item in treeData" :key="item.cgId" class="nice-all-level-2-name">
-          <div
-            class="l2-title"
-            @click="changeCheckCgIdL2(item)"
-            :class="{
-              active: item.cgList.find(i => i.isChecked),
-              expand: item.isExpand
-            }"
-          >
-            <view class="ifSearch" v-show="searchResult.length"></view>
-            <nut-icon name="triangle-up" custom-color="#e4e4e4"></nut-icon>
-            <view style="flex: 1">{{ item.cgNum + " " + item.cgName }}</view>
-          </div>
-
-          <div class="nice-all-level-3" v-show="item.isExpand">
-            <div
-              class="nice-all-level-3-name"
-              v-for="item3 in item.cgList"
-              :key="item3.cgId"
-              :class="{ checked: item3.isChecked }"
-              @click="changeCheckCgIdL3(item3)"
-            >
-              <view>{{ item3.cgNum + " " + item3.cgName }}</view>
-              <view v-show="item3.isChecked"> <nut-icon name="checklist"></nut-icon> </view>
-            </div>
-          </div>
-        </div>
-      </div> -->
     </div>
     <view class="footerWrap">
       <view class="fileWrap">
@@ -126,14 +96,11 @@
       :showChooseWrap="showChooseWrapVisible"
       @closeChooseFn="showChooseWrapVisible = false"
       :niceClassifyListFormat="niceClassifyListFormat"
-    />
-    <!-- @clearChooseFn="clearChooseAll"
+      @clearChooseAll="clearChooseAll"
       @clearChooseOne="clearChooseOne"
       @clearChooseL2="clearChooseL2"
       @clearChooseL3="clearChooseL3"
-      :chooseListL1="niceClassifyListFormat"
-      :chooseAllList="chooseAllList"
-      v-if="showChooseWrapVisible" -->
+    />
   </view>
 </template>
 
@@ -353,37 +320,19 @@ const clearChooseAll = () => {
 const clearChooseOne = item => {
   let handleNice = niceClassify.value.find(i => i.cgId == item.cgId);
   handleNice.checkList = [];
-  handleNice.isChecked = false;
-  nextTick(() => {
-    console.log(item, "清空某一大类");
-    changeCheckCgId(item.cgId);
-    setTimeout(() => {
-      showChooseWrap();
-    }, 500);
-  });
+  changeCheckCgId(item.cgId);
 };
 //清空某一大类下的二级
 const clearChooseL2 = (classL1, classL2) => {
   let handleNice = niceClassify.value.find(i => i.cgId == classL1.cgId);
   handleNice.checkList = handleNice.checkList.filter(i => i.cgParent != classL2.cgId);
-  nextTick(() => {
-    console.log(classL2, "清空某一大类下的二级");
-    changeCheckCgId(classL1.cgId);
-    setTimeout(() => {
-      showChooseWrap();
-    }, 500);
-  });
+  changeCheckCgId(classL1.cgId);
 };
 //清空某一大类下的三级
 const clearChooseL3 = (classL1, classL2, classL3) => {
   let handleNice = niceClassify.value.find(i => i.cgId == classL1.cgId);
   handleNice.checkList = handleNice.checkList.filter(i => i.cgId != classL3.cgId);
-  nextTick(() => {
-    changeCheckCgId(classL1.cgId);
-    setTimeout(() => {
-      showChooseWrap();
-    }, 500);
-  });
+  changeCheckCgId(classL1.cgId);
 };
 //保存尼斯分类
 const saveNiceClassify = () => {
