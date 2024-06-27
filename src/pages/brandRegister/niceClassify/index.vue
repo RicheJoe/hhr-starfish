@@ -108,6 +108,28 @@
       v-model:visible="confirmPopVisible"
       @ok="modalClickOk"
     />
+
+    <nut-dialog
+      title="温馨提示"
+      v-model:visible="submitPopVisible"
+      custom-class="submit-pop"
+      text-align="left"
+      no-footer
+    >
+      <view class="submit-tips">以下类别选择的商品/服务项 不足 10 项，请确认是否需要修改?</view>
+      <view class="color">注:不足 10 项时按 10 项收费</view>
+      <scroll-view class="viewLackGoodsDialogScroll" scroll-y>
+        <view v-for="nice in niceClassify" :key="nice.cgId">
+          <view class="lack-item" v-if="l3CheckedNum(nice) && l3CheckedNum(nice) < 10">
+            第{{ nice.cgNum }}类{{ nice.cgName }},已选择
+            <text class="orange"> {{ l3CheckedNum(nice) }}</text>
+            个项目;
+          </view>
+        </view>
+      </scroll-view>
+      <view class="tvLackGoodsDialogEdit" @click="submitPopVisible = false">重新修改</view>
+      <view class="tvLackGoodsDialogNext" @click="nextStep">继续下一步</view>
+    </nut-dialog>
   </view>
 </template>
 
@@ -121,7 +143,7 @@ import {
   benefitsRemain
 } from "@/server/brand.js";
 import { getUserInfo } from "@/utils/index.js";
-import { onReady } from "@dcloudio/uni-app";
+import { onReady, onLoad } from "@dcloudio/uni-app";
 import nextTree from "./components/next-tree/next-tree.vue";
 import chosenModal from "./components/chosenModal.vue";
 
@@ -319,7 +341,7 @@ const showChooseWrap = () => {
 
   showChooseWrapVisible.value = true;
 };
-//确认弹窗
+//确认清空弹窗
 const confirmPopVisible = ref(false);
 //清空所有选中的
 const clearChooseAll = () => {
@@ -351,9 +373,26 @@ const clearChooseL3 = (classL1, classL2, classL3) => {
   handleNice.checkList = handleNice.checkList.filter(i => i.cgId != classL3.cgId);
   changeCheckCgId(classL1.cgId);
 };
+
+//保存前确认弹窗
+const submitPopVisible = ref(false);
 //保存尼斯分类
 const saveNiceClassify = () => {
-  if (!chooseAllList.value) return;
+  if (!totalNum01.value)
+    return uni.showToast({
+      title: "至少选择一个分类",
+      icon: "none",
+      mask: true
+    });
+
+  if (niceClassify.value.find(i => i.checkList.length < 10)) {
+    submitPopVisible.value = true;
+  } else {
+    nextStep();
+  }
+};
+//继续下一步
+const nextStep = () => {
   console.log(chooseAllList.value, "选中的数据");
 };
 
@@ -565,5 +604,49 @@ onReady(() => {
   margin-left: 15rpx;
   font-size: 24rpx;
   color: #ff4422;
+}
+:deep {
+  .submit-pop {
+    .submit-tips {
+      font-size: 28rpx;
+      color: #222222;
+      margin-top: 10rpx;
+      line-height: 42rpx;
+    }
+    .color {
+      font-size: 28rpx;
+      color: #ff4422;
+      margin-top: 8rpx;
+    }
+    .orange {
+      color: #ff9900;
+    }
+    .lack-item {
+      margin: 12rpx 0;
+    }
+    .viewLackGoodsDialogScroll {
+      flex: 1 1 1px;
+      overflow-y: auto;
+    }
+    .tvLackGoodsDialogEdit {
+      border-radius: 40rpx;
+      height: 80rpx;
+      background-color: #ff9900;
+      text-align: center;
+      line-height: 80rpx;
+      color: white;
+      font-size: 32rpx;
+      margin-top: 40rpx;
+    }
+
+    .tvLackGoodsDialogNext {
+      color: #cccccc;
+      font-size: 28rpx;
+      line-height: 60rpx;
+      margin-top: 15rpx;
+      text-align: center;
+      text-decoration-line: underline;
+    }
+  }
 }
 </style>
